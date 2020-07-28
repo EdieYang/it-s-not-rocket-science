@@ -10,5 +10,5 @@
         <property name="gender" value="1"/>
     </bean>
 
-
+    <bean id="person1" name="p" class="context.boot.Person"/>
 </beans>
