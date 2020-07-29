@@ -1,7 +1,13 @@
 import context.boot.Person;
+import context.boot.factoryBean.ConnectionFactoryBean;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * @author Eddie
@@ -27,7 +33,7 @@ public class ApplicationTest {
         for (String beanDefinitionName : beanDefinitionNames) {
             System.out.println(beanDefinitionName);
         }
-        String[] typeNames=  applicationContext.getBeanNamesForType(Person.class);
+        String[] typeNames = applicationContext.getBeanNamesForType(Person.class);
         for (String typeName : typeNames) {
             System.out.println(typeName);
         }
@@ -37,7 +43,10 @@ public class ApplicationTest {
 
     @Test
     public void test2() {
-
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
+        Connection  c1 = (Connection) ctx.getBean("conn");
+        Connection c2 = (Connection) ctx.getBean("conn");
+        System.out.println(c1==c2);
     }
 
 }

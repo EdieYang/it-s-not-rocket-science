@@ -11,4 +11,6 @@
     </bean>
 
     <bean id="person1" name="p" class="context.boot.Person"/>
+
+    <bean id="conn" class="context.boot.factoryBean.ConnectionFactoryBean" />
 </beans>
