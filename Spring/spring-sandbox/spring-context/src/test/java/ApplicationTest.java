@@ -1,5 +1,6 @@
 import context.boot.Person;
 import context.boot.factoryBean.ConnectionFactoryBean;
+import context.boot.proxy.UserService;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -48,4 +49,13 @@ public class ApplicationTest {
         System.out.println(person);
     }
 
+    @Test
+    public void test3() {
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
+        UserService userService = (UserService) ctx.getBean("userService");
+        Person person = (Person) ctx.getBean("person3");
+        userService.register(person);
+        userService.login(person.getName(), "123");
+
+    }
 }

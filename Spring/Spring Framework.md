@@ -542,3 +542,332 @@ SqlSession | Session
 
   
 
+##  配置文件参数化
+
+把Spring配置文件中需要经常修改的字符串信息，转移到一个更小的配置文件中，利于Spring配置文件的维护
+
+```xml
+1.提供一个properties文件，名称随意，放置位置随意
+2.配置属性维护到properties文件中
+3.导入properties文件，classpath 目录代表java和resource包合并的classes目录下。
+<context:property-placeholder location="classpath:/xxx.properties" />
+4.在value标签中替换成${key}
+```
+
+
+
+## 自定义类型转换器
+
+当Spring内部没有提供特定的类型转换器时，自己定义
+
+1.实现自定义的converter<S,T> 接口
+
+```java
+public class DateConverter implements Converter<String, Date> {
+
+    public Date convert(String source) {
+        
+        Date date = null;
+        try {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            date = simpleDateFormat.parse(source);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return date;
+    }
+}
+```
+
+
+
+2.Spring配置文件中配置自定义转换器
+
+- DateConverter对象创建出来
+
+  ```xml
+  <bean id = "dateConverter" class="context.boot.converter.DateConverter" />
+  ```
+
+- 类型转换器的注册
+
+  ```xml
+  #告知Spring，自定义的dateConverter是一个类型转换器,
+   <!--配置自定义converter-->
+  <bean id="dateConverter" class="context.boot.converter.DateConverter"/>
+  
+  <!--用于注册类型转换器，id必须为id="conversionService"-->
+  <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+      <property name="converters">
+          <set>
+              <ref bean="dateConverter"/>
+          </set>
+      </property>
+  </bean>
+  ```
+
+  
+
+- ConversionServiceFactoryBean 定义 id属性 必须是conversionService
+- Spring框架内部提供了日期类型转换器 支持的日期格式：yyyy/mm/dd
+
+
+
+## 后置处理Bean
+
+BeanPostProcessor作用：对Spring工厂所创建的对象，进行再加工
+
+程序员实现BeanPostProcessor接口的方法
+
+ ``` java
+Object postProcessBeforeInitialization(Object bean, String beanName)
+作用：Spring创建完对象，并进行注入后，可以运行Before方法进行加工
+获得Spring创建好的对象：通过方法的参数Object bean
+最终通过返回值交给Spring框架
+    
+Object postProcessAfterInitialization(Object bean, String beanName)
+作用：Spring执行完对象的初始化操作后，可以执行After方法进行加工
+
+实战中：
+    很少处理Spring初始化操作，没有必要区分Before，After，只要实现其中的一个方法即可。
+    
+ ```
+
+- 定义类，实现BeanPostProcessor接口
+
+  ```java
+  public class MyBeanProcessor implements BeanPostProcessor {
+  
+      @Override
+      public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+          System.out.println("postProcessBeforeInitialization->" + beanName);
+          if (bean instanceof Person) {
+              Person person = ((Person) bean);
+              person.setAge(12);
+          }
+          return bean;
+      }
+  
+      @Override
+      public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+          System.out.println("postProcessAfterInitialization->" + beanName);
+          if (bean instanceof Person) {
+              Person person = ((Person) bean);
+              person.setAge(14);
+          }
+          return bean;
+      }
+  }
+  ```
+
+  
+
+- Spring配置
+
+  ```xml
+  <bean id="MyBeanProcessor" class="context.boot.initProcess.MyBeanProcessor"/>
+  ```
+
+ - BeanPostProcessor细节
+
+   BeanPostProcessor会对Spring工厂中所有创建的对象进行加工。 
+
+
+
+
+
+
+
+## AOP
+
+
+
+### 1.代理设计模式
+
+1.1概念
+
+通过代理类，为原始类（目标类）增加额外的功能
+
+2.好处：利于原始类的维护
+
+1.2名词解释
+
+原始类，目标类指的是业务类，只做核心功能
+
+目标方法，原始方法指目标类原始类的方法
+
+额外功能，附加功能（日志、事务、性能）
+
+
+
+#### 1.静态代理：为每个原始类，手动新增原始类的proxy
+
+代理开发的核心要素
+
+代理类 = 目标类（原始类） + 额外功能 + 原始类实现相同的接口
+
+
+
+静态代理存在的问题：
+
+1.静态代理类文件数量过多，不利于项目管理
+
+2.额外功能维护性差：代理类中 额外功能修改复杂，冗余
+
+
+
+#### 2.动态代理
+
+开发步骤
+
+依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aop</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjrt</artifactId>
+    <version>1.9.4</version>
+</dependency>
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjweaver</artifactId>
+    <version>1.9.5</version>
+</dependency>
+```
+
+
+
+1.创建原始对象（目标对象）
+
+```java
+public class UserServiceImpl implements UserService {
+
+    @Override
+    public void register(Person person) {
+        System.out.println("register" + person);
+    }
+
+    @Override
+    public void login(String userName, String password) {
+        System.out.println("login....success");
+    }
+}
+
+```
+
+```xml
+ <bean id="userService" class="context.boot.proxy.UserServiceImpl"/>
+```
+
+2.额外功能
+
+MethodBeforeAdvice接口
+
+额外的功能书写在接口的实现中，在原始方法执行之前运行额外功能
+
+```java
+public class BeforeAdvisor implements MethodBeforeAdvice {
+    @Override
+    public void before(Method method, Object[] args, Object target) throws Throwable {
+        System.out.println("---log---");
+    }
+}
+```
+
+```xml
+<bean id="beforeAdvisor" class="context.boot.proxy.BeforeAdvisor"/>
+```
+
+
+
+3.定义切点
+
+```xml
+切入点：额外功能加入的位置
+
+目的：有程序员根据自己的需要，决定额外功能加入给哪个原始方法
+register / login
+```
+
+```xml
+<aop:config>
+    <!--所有的方法都作为切入点，，都加入额外功能-->
+    <aop:pointcut id="pc" expression="execution(* *(..))"/>
+    <!--组装：目的把切入点和额外功能进行整合-->
+    <aop:advisor id="advisor" pointcut-ref="pc" advice-ref="beforeAdvisor"/>
+</aop:config>
+```
+
+4.获取动态代理对象执行方法
+
+```java
+ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
+//Spring的工厂通过原始对象的id值获得的是代理对象，userService此地是动态代理对象
+UserService userService = (UserService) ctx.getBean("userService");
+Person person = (Person) ctx.getBean("person3");
+userService.register(person);
+userService.login(person.getName(), "123");
+```
+
+```xml
+---log---
+postProcessBeforeInitialization->dateConverter
+---log---
+postProcessAfterInitialization->dateConverter
+---log---
+postProcessBeforeInitialization->conversionService
+---log---
+postProcessAfterInitialization->conversionService
+---log---
+---log---
+---log---
+postProcessAfterInitialization->conversionService
+---log---
+---log---
+---log---
+---log---
+---log---
+---log---
+---log---
+---log---
+---log---
+---log---
+---log---
+converting
+---log---
+postProcessBeforeInitialization->person3
+---log---
+postProcessAfterInitialization->person3
+---log---
+---log---
+postProcessBeforeInitialization->userService
+---log---
+postProcessAfterInitialization->userService
+---log---
+---log---
+---log---
+---log---
+registerPerson{name='Eddie', age=14, gender=1, birthday=Sun Jul 18 22:43:00 CST 1993}
+---log---
+---log---
+login....success
+```
+
+
+
+
+
+##### 动态代理细节分析
+
+1.Spring创建的动态代理类在哪里？
+
+```xml
+Spring框架在运行时，通过动态字节码技术，在JVM创建的，运行在JVM内部，等程序结束后，会和JVM一起消失
+什么叫动态字节码技术：通过第三个动态字节码框架，在JVM中创建对应类的字节码，进行创建对象，当虚拟机结束，动态字节码跟着消失。
+结论：动态代理不需要定义类文件，都是JVM运行过程中动态创建的，所以不会造成静态代理 类文件数量过多，影响项目管理的问题。
+```
+

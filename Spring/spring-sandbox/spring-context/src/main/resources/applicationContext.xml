@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/aop"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
 
     <!--    <bean id="person" class="context.boot.Person">-->
@@ -12,7 +13,7 @@
 
     <!--    <bean id="person1" name="p" class="context.boot.Person"/>-->
 
-<!--    <bean id="conn" class="context.boot.factoryBean.ConnectionFactoryBean"/>-->
+    <!--    <bean id="conn" class="context.boot.factoryBean.ConnectionFactoryBean"/>-->
 
     <bean id="person3" class="context.boot.Person">
         <property name="name" value="Eddie"/>
@@ -35,4 +36,17 @@
 
 
     <bean id="MyBeanProcessor" class="context.boot.initProcess.MyBeanProcessor"/>
+
+
+    <bean id="userService" class="context.boot.proxy.UserServiceImpl"/>
+
+    <bean id="beforeAdvisor" class="context.boot.proxy.BeforeAdvisor"/>
+    <aop:config>
+        <!--所有的方法都作为切入点，，都加入额外功能-->
+        <aop:pointcut id="pc" expression="execution(* *(..))"/>
+        <!--组装：目的把切入点和额外功能进行整合-->
+        <aop:advisor id="advisor" pointcut-ref="pc" advice-ref="beforeAdvisor"/>
+    </aop:config>
+
+
 </beans>
