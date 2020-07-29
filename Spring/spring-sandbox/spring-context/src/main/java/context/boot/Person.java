@@ -1,5 +1,10 @@
 package context.boot;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+
+import java.util.Date;
+
 /**
  * @author Eddie
  * @version 1.0
@@ -10,6 +15,7 @@ public class Person {
     private String name;
     private Integer age;
     private Integer gender;
+    private Date birthday;
 
 
     public String getName() {
@@ -36,12 +42,23 @@ public class Person {
         this.gender = gender;
     }
 
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+
     @Override
     public String toString() {
         return "Person{" +
                 "name='" + name + '\'' +
                 ", age=" + age +
                 ", gender=" + gender +
+                ", birthday=" + birthday +
                 '}';
     }
+
+
 }

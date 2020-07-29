@@ -44,9 +44,8 @@ public class ApplicationTest {
     @Test
     public void test2() {
         ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
-        Connection  c1 = (Connection) ctx.getBean("conn");
-        Connection c2 = (Connection) ctx.getBean("conn");
-        System.out.println(c1==c2);
+        Person person = (Person) ctx.getBean("person3");
+        System.out.println(person);
     }
 
 }

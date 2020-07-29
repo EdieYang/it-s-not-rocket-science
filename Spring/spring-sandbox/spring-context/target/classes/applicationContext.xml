@@ -1,16 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
 
 
-    <bean id="person" class="context.boot.Person">
+    <!--    <bean id="person" class="context.boot.Person">-->
+    <!--        <property name="name" value="Eddie"/>-->
+    <!--        <property name="age" value="18"/>-->
+    <!--        <property name="gender" value="1"/>-->
+    <!--    </bean>-->
+
+    <!--    <bean id="person1" name="p" class="context.boot.Person"/>-->
+
+<!--    <bean id="conn" class="context.boot.factoryBean.ConnectionFactoryBean"/>-->
+
+    <bean id="person3" class="context.boot.Person">
         <property name="name" value="Eddie"/>
         <property name="age" value="18"/>
         <property name="gender" value="1"/>
+        <property name="birthday" value="1993-07-18 22:43:00"/>
     </bean>
 
-    <bean id="person1" name="p" class="context.boot.Person"/>
+    <!--配置自定义converter-->
+    <bean id="dateConverter" class="context.boot.converter.DateConverter"/>
 
-    <bean id="conn" class="context.boot.factoryBean.ConnectionFactoryBean" />
+    <!--用于注册类型转换器-->
+    <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <ref bean="dateConverter"/>
+            </set>
+        </property>
+    </bean>
+
+
+    <bean id="MyBeanProcessor" class="context.boot.initProcess.MyBeanProcessor"/>
 </beans>
