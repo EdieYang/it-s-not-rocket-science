@@ -871,3 +871,97 @@ Spring框架在运行时，通过动态字节码技术，在JVM创建的，运�
 结论：动态代理不需要定义类文件，都是JVM运行过程中动态创建的，所以不会造成静态代理 类文件数量过多，影响项目管理的问题。
 ```
 
+2.动态代理编程简化代理的开发
+
+```xml
+在额外功能不变的前提下，创建其他目标类（原始类）的代理对象时，只需要指定原始（目标）对象即可
+```
+
+3.动态代理额外功能可维护性大大增加
+
+
+
+##### Spring动态代理详解
+
+###### 1.额外功能
+
+MethodBeforeAdvice：运行在原始方法执行之前
+
+```java
+public class BeforeAdvisor implements MethodBeforeAdvice {
+    /**
+     * 
+     * @param method 原始目标对象的方法
+     * @param args 原始目标对象的方法参数
+     * @param target 原始目标对象
+     * @throws Throwable
+     */
+    @Override
+    public void before(Method method, Object[] args, Object target) throws Throwable {
+        System.out.println("---log---");
+    }
+}
+```
+
+
+
+MethodInterceptor：运行在原始方法之前，之后 ， 环绕
+
+```java
+public class Around implements MethodInterceptor {
+
+    /**
+     * invocation.proceed() 代表原始方法运行
+     *
+     * @param invocation
+     * @return 原始方法执行后的返回值
+     * @throws Throwable
+     */
+    @Override
+    public Object invoke(MethodInvocation invocation) throws Throwable {
+        //TODO 添加原始方法之前的额外功能
+        Object ret = invocation.proceed(); // 执行原始方法
+        //TODO 添加原始方法之后的额外功能
+        return ret;
+    }
+}
+```
+
+MethodInterceptor：运行在原始方法抛出异常时
+
+```java
+public class Around implements MethodInterceptor {
+
+    /**
+     * invocation.proceed() 代表原始方法运行
+     *
+     * @param invocation
+     * @return 原始方法执行后的返回值
+     * @throws Throwable
+     */
+    @Override
+    public Object invoke(MethodInvocation invocation) throws Throwable {
+        //TODO 添加原始方法之前的额外功能
+        Object ret = null;
+        try {
+            ret = invocation.proceed(); // 执行原始方法
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+        //TODO 添加原始方法之后的额外功能
+        return ret;
+    }
+}
+```
+
+
+
+###### 2.切点详解
+
+切入点决定额外功能加入位置（方法）
+
+```xml
+<!--所有的方法都作为切入点，，都加入额外功能-->
+<aop:pointcut id="pc" expression="execution(* *(..))"/>
+```
+
