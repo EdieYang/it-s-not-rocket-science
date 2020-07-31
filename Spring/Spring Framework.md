@@ -963,5 +963,189 @@ public class Around implements MethodInterceptor {
 ```xml
 <!--所有的方法都作为切入点，，都加入额外功能-->
 <aop:pointcut id="pc" expression="execution(* *(..))"/>
+
+* 					*				(..)
+修饰符+返回值		   包+类+方法		 参数
 ```
+
+1.方法切入点
+
+```xml
+参数：非java.lang包中的类，必须要写全限定名
+e.g.精准匹配
+* com.xxx.UserServiceImpl.register(String,String) 
+```
+
+2.类切入点
+
+```xml
+指定特定类作为切入点（额外功能添加的位置），自然这个类中的所有方法，都会加上对应的额外功能
+* com.xxx.UserServiceImpl.*(..)
+
+忽略包
+* *.UserServiceImpl.*(..)  //一级包
+* *..UserServiceImpl.*(..)  //多级包
+```
+
+3.包切入点
+
+```xml
+#切入点包中的所有类，必须在xxx包中，不能在xxx包的子包中
+* com.xxx.*.*(..)
+
+#切入点在xxx包下及其子包的类
+* com.xxx..*.*(..)
+```
+
+
+
+###### 3.切入点函数
+
+切入点函数：用于执行切入点表达式
+
+1.execution 
+
+2.args
+
+用于方法切点的参数表达式匹配
+
+3.within
+
+主要用于进行类、包切入点表达式的匹配
+
+4.@annotation
+
+为具有特殊注解的方法加入切入点
+
+```java
+//定义一个注解
+
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Log {
+}
+
+//标注在需要加入切点的方法
+public class UserServiceImpl implements UserService {
+
+    @Log
+    @Override
+    public void register(Person person) {
+        System.out.println("register" + person);
+    }
+
+    @Override
+    public void login(String userName, String password) {
+        System.out.println("login....success");
+    }
+}
+
+
+//使用@annotation函数
+ <aop:pointcut id="pc" expression="@annotation(context.boot.proxy.Log)"/>
+
+```
+
+5.切入点函数的逻辑运算
+
+整合多个切入点函数一起配合，完成更加复杂的需求
+
+- and 与操作
+
+  ```xml
+  案例：login同时满足两个参数
+  
+  execution(* login(String,String))
+  execution(* login(..)) and args(String,String)
+  
+  与操作不能用于同种类型的切点函数
+  
+  ```
+
+- or 或操作
+
+  ```xml
+  案例：将register 和 login 方法作为切入点
+  
+  execution(* register(..)) or execution(* login(..)) 
+  ```
+
+
+
+
+
+
+
+### AOP编程
+
+```xml
+1.原始对象
+2.额外功能（MethodInterceptor)
+3.切入点
+4.组装切面（额外功能+切入点）
+```
+
+
+
+#### 1.aop底层实现
+
+1.AOP如何创建动态代理类（动态字节码技术）
+
+2.Spring工厂是如何加工创建代理对象
+
+​	通过原始对象的id值最终获得的是代理对象
+
+
+
+动态代理类的创建
+
+1.JDK动态代理
+
+
+
+
+
+2.cgLib动态代理
+
+
+
+
+
+总结：
+
+1.JDK动态代理 Proxy.newProxyInstance() 通过接口创建代理的实现类
+
+2.Cglib动态代理 Enhancer 通过继承父类创建的代理类
+
+
+
+
+
+
+
+BeanPostProcessor  Spring工厂是如何创建代理对象 ，在BeanPostProcessor中使用jdk动态代理
+
+
+
+
+
+#### 2.基于注解的AOP编程
+
+1.原始对象
+
+2.额外功能
+
+3.切入点
+
+4.组装切面
+
+```xml
+通过切面类定义	   额外的功能点 around(ProceedingJoinPoint joinPoint)
+				切入点 @Around("execution(* login(..))")
+				组装切面类 @Aspect
+```
+
+
+
+
 

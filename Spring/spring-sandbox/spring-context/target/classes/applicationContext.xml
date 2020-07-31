@@ -43,7 +43,9 @@
     <bean id="beforeAdvisor" class="context.boot.proxy.BeforeAdvisor"/>
     <aop:config>
         <!--所有的方法都作为切入点，，都加入额外功能-->
-        <aop:pointcut id="pc" expression="execution(* *(..))"/>
+        <!--        <aop:pointcut id="pc" expression="execution(* *(..))"/>-->
+        <aop:pointcut id="pc" expression="@annotation(context.boot.proxy.Log)"/>
+
         <!--组装：目的把切入点和额外功能进行整合-->
         <aop:advisor id="advisor" pointcut-ref="pc" advice-ref="beforeAdvisor"/>
     </aop:config>

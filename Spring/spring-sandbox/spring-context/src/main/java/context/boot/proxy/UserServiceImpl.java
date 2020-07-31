@@ -10,6 +10,7 @@ import org.aopalliance.aop.Advice;
  */
 public class UserServiceImpl implements UserService {
 
+    @Log
     @Override
     public void register(Person person) {
         System.out.println("register" + person);
