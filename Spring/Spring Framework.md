@@ -1147,5 +1147,52 @@ BeanPostProcessor  Spring工厂是如何创建代理对象 ，在BeanPostProcess
 
 
 
+Pointcut注解
+
+
+
+
+
+动态代理的创建方式
+
+默认情况下 AOP编程 底层应用JDK动态代理创建方式
+
+如果切换Cglib
+
+```xml
+1.基于注解AOP开发
+<aop:aspectj-autoproxy proxy-target-class="true" />
+2.传统AOP开发
+<aop:config proxy-target-class="true"></aop:config>
+```
+
+
+
+#### 3.AOP总结
+
+AOP编程概念（Spring的动态代理开发）
+
+概念：通过代理类为原始类添加额外功能
+
+好处：利于原始类的维护
+
+
+
+AOP编程的开发（动态代理开发）
+
+1.原始对象
+
+2.额外功能
+
+3.切入点
+
+4.组装切面
+
+
+
+基于配置的开发
+
+基于注解的开发
+
 
 
