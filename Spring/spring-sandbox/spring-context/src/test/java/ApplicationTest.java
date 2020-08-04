@@ -1,14 +1,10 @@
 import context.boot.Person;
-import context.boot.factoryBean.ConnectionFactoryBean;
 import context.boot.proxy.UserService;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.*;
 
 /**
  * @author Eddie
@@ -44,9 +40,13 @@ public class ApplicationTest {
 
     @Test
     public void test2() {
-        ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
-        Person person = (Person) ctx.getBean("person3");
-        System.out.println(person);
+//        ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
+//        Person person = (Person) ctx.getBean("person3");
+//        System.out.println(person);
+//         Map<String,String> map = new HashMap<>(16);
+//        System.out.println(map.isEmpty());
+        List<String> list = new ArrayList<>(15);
+        System.out.println(list.isEmpty());
     }
 
     @Test
@@ -56,6 +56,24 @@ public class ApplicationTest {
         Person person = (Person) ctx.getBean("person3");
         userService.register(person);
         userService.login(person.getName(), "123");
+
+    }
+
+    @Test
+    public void test4() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "walt");
+        map.put("age", 12);
+        map.put("gender", 1);
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            System.out.println("key=" + entry.getKey() + "&value=" + entry.getValue());
+        }
+
+        //使用Map.forEach遍历
+        map.forEach((key, value) -> {
+            System.out.println("key=" + key + "&value=" + value);
+        });
 
     }
 }
