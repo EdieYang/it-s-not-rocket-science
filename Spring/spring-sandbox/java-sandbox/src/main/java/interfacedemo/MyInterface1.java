@@ -12,9 +12,9 @@ public interface MyInterface1 {
 
     void method2();
 
-//    default void methodDefault(){
-//        System.out.println("default method!");
-//    }
+    default void methodDefault(){
+        System.out.println("default method!");
+    }
 
 
 }

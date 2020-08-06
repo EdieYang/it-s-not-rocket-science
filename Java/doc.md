@@ -35,13 +35,17 @@
 
 ### 接口
 
-接口的静态方法使用：static修饰的方法，接口.staticmethod(...) ，不能通过实现此接口的类实例进行调用
+#### 1.接口的静态方法使用：
 
-接口的default方法使用：default修饰的方法，实现类可以直接调用default修饰的方法，也可以重写此default方法。
+static修饰的方法，接口.staticmethod(...) ，不能通过实现此接口的类实例进行调用
+
+#### 2.接口的default方法使用：
+
+default修饰的方法，实现类可以直接调用default修饰的方法，也可以重写此default方法。 
 
 接口当中的默认方法可以解决接口升级的问题，如果要在接口中添加抽象方法，实现类必须实现此方法，但如果加入default方法，实现类可以不做任何修改，也可以拥有此default方法。
 
-接口的私有方法：private修饰的方法
+#### 3.接口的私有方法：private修饰的方法
 
 解决场景：需要抽取一个共有方法，来解决两个默认方法中重复代码的问题。
 
@@ -53,13 +57,13 @@
 
 静态私有方法解决静态方法的重复代码问题
 
-接口中的常量：
+#### 4.接口中的常量：
 
 1.接口中的常量默认 public static final 
 
 2.接口中的常量必须赋值初始化
 
-注意：
+#### 5.注意：
 
 1.如果实现类实现了多个接口，多个接口中有相同的抽象方法，实现类只需覆盖重写一次即可
 
@@ -74,4 +78,97 @@
 6.多个父接口中的抽象方法如果重复，没关系
 
 7.多个父接口中的默认方法重复，子接口必须重写默认方法。
+
+
+
+###  内部类
+
+内部类分为成员内部类，局部内部类，匿名内部类
+
+##### 成员内部类
+
+```java
+public class Outer {
+    //外部类属性
+    private int num = 1;
+
+    public class Inner {
+        private int num = 2;
+
+        public void method() {
+            System.out.println("num:" + num);
+            // 获取外部类的变量规则
+            // Outer.this.field
+            System.out.println("OuterNum:" + Outer.this.num);
+        }
+    }
+
+    public static void main(String[] args) {
+        //外部类初始化内部类实例
+        Outer.Inner inner = new Outer().new Inner();
+        //通过内部类实例执行内部类中定义的方法
+        inner.method();
+    }
+}
+```
+
+
+
+##### 类的权限修饰符
+
+public > protected > (default) > private 
+
+定义一个内部类时，修饰符的规则
+
+1）最外部类：public
+
+2）成员内部类：public、protected、（default）、private
+
+3）局部类：（default）其余的都不能写
+
+##### 局部内部类的final问题
+
+如果局部内部类需要访问方法的变量，此局部变量需要是【有效final的】
+
+原因：
+
+1.new出来的对象在堆内存中
+
+2.方法局部变量跟着方法走，局部变量在栈内存中
+
+3.方法执行结束后，立即出栈，局部变量跟着消失
+
+4.但是new出来的对象会在堆内存中持续存在，直到垃圾回收再消失
+
+5.
+
+备注：从java 8+ 开始，只要局部变量事实不变，final关键字可以省略
+
+```java
+/**
+ * 局部内部类示例
+ * 
+ * @author Edie
+ * @since 2020/08/06
+ **/
+public class Inner {
+
+    public void innerMethod() {
+        int num = 10;
+        //error 方法变量需要事实不变，final
+//        num =20;
+        //局部内部类
+        class superInner {
+            public void method() {
+                System.out.println(num);
+            }
+        }
+    }
+}
+
+```
+
+
+
+##### 匿名内部类
 

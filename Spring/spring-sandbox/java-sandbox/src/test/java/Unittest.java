@@ -1,5 +1,5 @@
+import innerclass.Outer;
 import interfacedemo.MyInterface1;
-import interfacedemo.Outer;
 import org.junit.Test;
 
 /**
