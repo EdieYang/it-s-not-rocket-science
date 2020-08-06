@@ -11,6 +11,7 @@
         <module>spring-context</module>
         <module>java-sandbox</module>
         <module>ioc-container-overview</module>
+        <module>spring-bean</module>
     </modules>
     <packaging>pom</packaging>
 

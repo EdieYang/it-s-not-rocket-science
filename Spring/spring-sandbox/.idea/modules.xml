@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ioc-container-overview/ioc-container-overview.iml" filepath="$PROJECT_DIR$/ioc-container-overview/ioc-container-overview.iml" />
       <module fileurl="file://$PROJECT_DIR$/java-sandbox/java-sandbox.iml" filepath="$PROJECT_DIR$/java-sandbox/java-sandbox.iml" />
+      <module fileurl="file://$PROJECT_DIR$/spring-bean/spring-bean.iml" filepath="$PROJECT_DIR$/spring-bean/spring-bean.iml" />
       <module fileurl="file://$PROJECT_DIR$/spring-context/spring-context.iml" filepath="$PROJECT_DIR$/spring-context/spring-context.iml" />
       <module fileurl="file://$PROJECT_DIR$/spring-sandbox.iml" filepath="$PROJECT_DIR$/spring-sandbox.iml" />
     </modules>
