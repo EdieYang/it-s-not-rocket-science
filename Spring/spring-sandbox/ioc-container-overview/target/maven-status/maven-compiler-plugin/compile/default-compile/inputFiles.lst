@@ -3,4 +3,6 @@
 /Users/Edie/Documents/it-s-not-rocket-science/Spring/spring-sandbox/ioc-container-overview/src/main/java/ioc/overview/dependency/domain/User.java
 /Users/Edie/Documents/it-s-not-rocket-science/Spring/spring-sandbox/ioc-container-overview/src/main/java/ioc/overview/dependency/lookup/DependencyLookupDemo.java
 /Users/Edie/Documents/it-s-not-rocket-science/Spring/spring-sandbox/ioc-container-overview/src/main/java/ioc/overview/dependency/annotation/Super.java
+/Users/Edie/Documents/it-s-not-rocket-science/Spring/spring-sandbox/ioc-container-overview/src/main/java/ioc/overview/dependency/iocontainer/BeanFactoryIocContainerDemo.java
+/Users/Edie/Documents/it-s-not-rocket-science/Spring/spring-sandbox/ioc-container-overview/src/main/java/ioc/overview/dependency/iocontainer/ApplicationContextAsIocContainerDemo.java
 /Users/Edie/Documents/it-s-not-rocket-science/Spring/spring-sandbox/ioc-container-overview/src/main/java/ioc/overview/dependency/domain/SuperUser.java
