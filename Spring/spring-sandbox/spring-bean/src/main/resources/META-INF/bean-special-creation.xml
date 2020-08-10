@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!--导入Spring XML 配置文件-->
+    <import resource="dependency-lookup-context.xml"/>
+
+    <!--此Bean是通过一个静态工厂方法来创建一个Bean的实例 ， 静态工厂方法定义在User类中-->
+    <bean id="user-by-static-method" class="ioc.overview.dependency.domain.User"
+          factory-method="createUser"
+    />
+
+    <!--此类通过工厂方法创建一个Bean的实例，工厂方法实例需要注入，才能调用工厂实例的工厂方法-->
+    <bean id="user-by-factory-method" class="ioc.overview.dependency.domain.User" factory-bean="userFactory"
+          factory-method="createUser"/>
+
+    <bean id="userFactory" class="bean.factory.UserFactory"/>
+
+    <bean id="userFactoryBean" class="bean.factory.UserFactoryBean"/>
+</beans>

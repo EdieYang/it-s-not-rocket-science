@@ -476,7 +476,7 @@ SqlSession | Session
   ``` xml
   scope="singleton"
   Spring工厂创建的同时，对象也创建
-  如果想配置Spring工厂会在获取对象的时候，创建对象，添加lazy-init= "true" 标签
+  如果想配置Spring工厂会在获取对象的时候(依赖查找时)，创建对象，添加lazy-init= "true" 标签
   scope="propotype"
   Spring工厂会在获取对象的时候，创建对象
   ```
@@ -490,19 +490,25 @@ SqlSession | Session
   2.初始化方法调用：Spring工厂进行调用
   ```
 
-  - initializingBean接口
+  - @PostConstruct 标注方法
+
+  - 实现initializingBean接口的afterPropertiesSet()方法
 
     ``` xml
     afterPropertiesSet()
     ```
 
-  - 对象中提供一个普通的方法用来提供初始化
+  - 自定义初始化方法：
 
+    对象中提供一个普通的方法用来提供初始化
+    
     ```xml
-    然后在xml中配置 <bean init-method="xxxx" ></bean>
-    ```
-
-    细节
+  1.Xml 配置： <bean init-method="xxxx" ></bean>
+    2.Java 注解：@Bean(initMethod = "init")
+    3.Java API：AbstractBeanDefinition#setInitMethodName(String)
+  ```
+    
+  细节
     1.如果一个对象即实现initializingBean接口又配置了init-method的普通初始化方法
 
     先执行initializtingBean ， 再 执行init-method 配置的方法
@@ -510,10 +516,18 @@ SqlSession | Session
     2.注入发生在初始化操作的前面
 
     3.什么叫做初始化操作？
-
+    
     资源的初始化：数据库 io 网络...
 
-    
+- Bean延迟初始化(Lzay Initialization)
+
+  - XML配置 
+
+    ``` xml
+    <bean lazy-init= "true" /> 
+    ```
+
+  - Java 注解：@Lazy(true)
 
 - 销毁阶段
 
@@ -525,6 +539,8 @@ SqlSession | Session
   2.销毁方法：程序员自己定义销毁方法，Spring工厂调用销毁方法
   ```
 
+  - @PreDestroy 标注方法
+
   - DisposableBean接口（销毁时先执行）
 
     ```xml
@@ -534,7 +550,9 @@ SqlSession | Session
   - 定义普通的销毁方法（销毁时后执行）
 
     ```xml
-    然后在xml中配置 <bean destroy-method="xxxx" ></bean>
+    1.Xml 配置： <bean destroy-method="xxxx" ></bean>
+    2.Java 注解：@Bean(destroy = "destroy")
+  3.Java API：AbstractBeanDefinition#setDestroyMethodName(String)
     ```
 
     细节
@@ -542,8 +560,14 @@ SqlSession | Session
     1.销毁方法的操作只适用于scope=“singleton”的对象
 
     2.什么叫做销毁操作？
-
+    
     资源的释放操作
+
+- Spring 垃圾回收销毁的Bean
+
+  - 关闭Spring容器（应用上下文）
+  - 执行GC
+  - Spring Bean覆盖的finalize()方法被回调
 
   
 
