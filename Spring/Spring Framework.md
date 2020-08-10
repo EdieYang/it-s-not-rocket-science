@@ -414,11 +414,16 @@ Spring工厂创建对象的总结：
 
 Spring 
 
-简单对象 配置bean
+- 简单对象 配置bean
 
-复杂对象 FactoryBean、实例工厂、静态工厂
+- 复杂对象 FactoryBean、实例工厂、静态工厂
 
+特殊创建方式：
 
+- 通过ServiceLoaderFactoryBean （配置元信息：XML、Java注解和Java API）
+
+- 通过AutowireCapableBeanFactory#createBean(java.lang.Class,int ,boolean)
+- 通过BeanDefinitionRegistry#registerBeanDefinition(String,BeanDefinition)
 
 
 
