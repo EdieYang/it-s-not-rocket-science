@@ -1,0 +1,39 @@
+server:
+  port: 8001
+spring:
+  application:
+    name: cloud-pay-service
+  datasource:
+    username: root
+    password: PokePet123456!
+    url: jdbc:mysql://47.101.47.149:3306/spring-cloud-test?charaterEncoding=utf8&autoReconnect=true&serverTimezone=UTC&useUnicode=true&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 1
+      maxWait: 60000
+      minIdle: 1
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      maxOpenPreparedStatements: 20
+      asyncInit: true
+      validationQuery: select 1
+      filters: stat
+
+
+
+mybatis:
+  type-aliases-package: com.rocketscience.entity
+  mapper-locations: classpath:mapper/*.xml
+
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://localhost:7001/eureka
