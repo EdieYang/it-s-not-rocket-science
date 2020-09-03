@@ -20,10 +20,6 @@
     <artifactId>ioc-container-overview</artifactId>
 
     <dependencies>
-        <!-- Spring ioc 核心依赖 -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
+
     </dependencies>
 </project>

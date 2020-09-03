@@ -9,15 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>spring-bean</artifactId>
-    <dependencies>
+    <artifactId>dependency-injection</artifactId>
 
-        <!--复用Spring-context artifact-->
-        <dependency>
-            <groupId>${groupId}</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${version}</version>
-        </dependency>
+    <dependencies>
         <dependency>
             <groupId>com.rocket</groupId>
             <artifactId>ioc-container-overview</artifactId>
