@@ -23,12 +23,12 @@ public class ConsumerController {
     @Resource
     private RestTemplate restTemplate;
 
-    public static final String url = "http://localhost:8001";
+    public static final String url = "http://CLOUD-PAY-SERVICE";
 
     @GetMapping("/consumer/payment")
     public CommonResult<Payment> getPayment(@RequestParam("id") String id) {
         CommonResult<Payment> res = restTemplate.getForObject(url + "/payment/" + id, CommonResult.class);
-        return new CommonResult<>(200, "success", res.getData());
+        return res;
     }
 
     @PostMapping("/consumer/payment/create")

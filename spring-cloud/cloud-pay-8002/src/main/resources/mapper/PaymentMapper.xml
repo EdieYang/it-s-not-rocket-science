@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.rocketscience.dao.PaymentDao">
+    <resultMap id="baseResultMap" type="com.rocketscience.entity.Payment">
+        <id column="id" jdbcType="BIGINT" javaType="Long" property="id"/>
+        <result column="serial_num" jdbcType="VARCHAR" javaType="String" property="serialNum"/>
+    </resultMap>
+    <select id="getPaymentById" parameterType="java.lang.Long" resultMap="baseResultMap">
+        SELECT * FROM cloud_payment WHERE id = #{id}
+    </select>
+
+    <insert id="create" parameterType="com.rocketscience.entity.Payment" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        INSERT INTO cloud_payment(serial_num) values(#{serialNum})
+    </insert>
+</mapper>
+
