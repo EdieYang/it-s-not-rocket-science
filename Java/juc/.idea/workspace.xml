@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="0d7050e8-93a3-442b-96c0-b047e145edff" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/com/learn/howtocreatethread/ThreadDemo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Java-xmind/JUC.xmind" beforeDir="false" afterPath="$PROJECT_DIR$/../../Java-xmind/JUC.xmind" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="ProjectId" id="1iv9o62niKW9QOWuLib1lLldIjQ" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+  </component>
+  <component name="RunManager" selected="Application.Main">
+    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Main" />
+      <module name="juc" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ThreadDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="1.8.0_221" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <option name="MAIN_CLASS_NAME" value="com.learn.howtocreatethread.ThreadDemo" />
+      <module name="juc" />
+      <shortenClasspath name="CLASSPATH_FILE" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.learn.howtocreatethread.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.ThreadDemo" />
+      <item itemvalue="Application.Main" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.Main" />
+        <item itemvalue="Application.ThreadDemo" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0d7050e8-93a3-442b-96c0-b047e145edff" name="Default Changelist" comment="" />
+      <created>1602777369983</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1602777369983</updated>
+      <workItem from="1602777376667" duration="855000" />
+      <workItem from="1602805149191" duration="17000" />
+      <workItem from="1602805734028" duration="1044000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="2" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="104" y="39" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1602805084706">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state x="104" y="39" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1280.709@0.23.1280.709" timestamp="1602805084706" />
+    <state x="453" y="91" key="#com.intellij.ide.util.MemberChooser" timestamp="1602804496683">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state x="453" y="91" key="#com.intellij.ide.util.MemberChooser/0.23.1280.709@0.23.1280.709" timestamp="1602804496683" />
+    <state x="377" y="174" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1602805054266">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state x="377" y="174" key="#com.intellij.ide.util.TreeClassChooserDialog/0.23.1280.709@0.23.1280.709" timestamp="1602805054266" />
+    <state width="346" height="589" key="GridCell.Tab.0.bottom" timestamp="1602805949214">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state width="346" height="589" key="GridCell.Tab.0.bottom/0.23.1280.709@0.23.1280.709" timestamp="1602805949214" />
+    <state width="346" height="589" key="GridCell.Tab.0.center" timestamp="1602805949212">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state width="346" height="589" key="GridCell.Tab.0.center/0.23.1280.709@0.23.1280.709" timestamp="1602805949212" />
+    <state width="346" height="589" key="GridCell.Tab.0.left" timestamp="1602805949212">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state width="346" height="589" key="GridCell.Tab.0.left/0.23.1280.709@0.23.1280.709" timestamp="1602805949212" />
+    <state width="346" height="589" key="GridCell.Tab.0.right" timestamp="1602805949213">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state width="346" height="589" key="GridCell.Tab.0.right/0.23.1280.709@0.23.1280.709" timestamp="1602805949213" />
+    <state x="2" y="23" width="982" height="709" key="SettingsEditor" timestamp="1602805886954">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state x="2" y="23" width="982" height="709" key="SettingsEditor/0.23.1280.709@0.23.1280.709" timestamp="1602805886954" />
+    <state x="34" y="23" key="new project wizard" timestamp="1602805872938">
+      <screen x="0" y="23" width="1280" height="709" />
+    </state>
+    <state x="34" y="23" key="new project wizard/0.23.1280.709@0.23.1280.709" timestamp="1602805872938" />
+  </component>
+</project>
