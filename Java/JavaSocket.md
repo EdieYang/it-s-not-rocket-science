@@ -1,6 +1,6 @@
 # Java TCP/IP Socket
 
-
+代码根路径：java-sandbox.socket包
 
 
 
@@ -185,4 +185,127 @@ TCP/IP中主要的socket类型
 - Inet6Address
 
 InetAddress实例是不可变的，一旦创建，每个实例就始终指向同一个地址
+
+#### NetworkInterface
+
+#InetAddressExample
+
+```java
+public static void main(String[] args) {
+    try {
+        Enumeration<NetworkInterface> interfaceList = NetworkInterface.getNetworkInterfaces();
+        if (interfaceList == null) {
+            System.out.println("--No interfaces found--");
+        } else {
+            while (interfaceList.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaceList.nextElement();
+                //打印接口的本地名称，由字母和数字联合组成，分别代表接口的类型和具体实例
+                System.out.println("Interface " + networkInterface.getName() + ":");
+                //获取接口关联的每一个地址，根据主机配置不同，地址列表可能只包含IPV4或IPV6地址，也可能包含两种类型地址的混合列表
+                Enumeration<InetAddress> addrList = networkInterface.getInetAddresses();
+                if (!addrList.hasMoreElements()) {
+                    System.out.println("\t(No addresses for this  interface)");
+                }
+                while (addrList.hasMoreElements()) {
+                    InetAddress address = addrList.nextElement();
+                    System.out.print("\tAddress " + ((address instanceof Inet4Address ? "(v4)" : (address instanceof Inet6Address ? "(v6)" : "(?)"))));
+                    //打印主机的数字型地址
+                    System.out.println(": " + address.getHostAddress());
+                }
+            }
+        }
+    } catch (SocketException e) {
+        System.out.println("Error getting network interfaces:" + e.getMessage());
+    }
+}
+
+
+//    Interface lo: (回环接口)
+//    Address (v4): 127.0.0.1
+//    Address (v6): 0:0:0:0:0:0:0:1
+//    Interface net0:
+//            (No addresses for this  interface)
+//    Interface net1:
+//            (No addresses for this  interface)
+//    Interface net2:
+//            (No addresses for this  interface)
+//    Interface ppp0:
+//            (No addresses for this  interface)
+//    Interface eth0:
+//            (No addresses for this  interface)
+//    Interface eth1:
+//            (No addresses for this  interface)
+//    Interface eth2:
+//            (No addresses for this  interface)
+//    Interface ppp1:
+//            (No addresses for this  interface)
+//    Interface net3:
+//            (No addresses for this  interface)
+//    Interface eth3:
+//    Address (v4): 192.168.2.34
+//    Address (v6): fe80:0:0:0:786f:3142:b2c1:c3b3%eth3（IPV6本地链接地址以fe8开头， %eth3 范围标识符 scope identifier区分唯一地址,同样的本地链接可以用于不同的链接中，不是数据报文中所传输的地址的一部分）
+...
+```
+
+
+
+### TCP套接字
+
+- Socket
+- ServerSocket
+
+Java 为 TCP协议提供了上述两类。
+
+一个Socket实例代表了TCP连接的一段，一个TCP连接是一套抽象的双向通道，两端分别由IP地址和端口号确定。
+
+在开始通信之前，要建立一个TCP连接，这需要先有客户端TCP向服务端TCP发送连接请求。
+
+ServerSocket实例监听TCP连接请求，并为每个请求创建新的Socket实例。
+
+服务器端要同时处理ServerSocket和Socket实例，而客户端只需要使用Socket实例。
+
+
+
+#### TCP客户端
+
+客户端向服务器发起连接请求后，就被动地等待服务器的响应。
+
+典型的TCP客户端要经过三步：
+
+- 创建一个Socket实例：构造器向指定的远程主机和端口建立一个TCP连接。
+- 通过套接字的输入输出流（I/O streams）进行通信：一个Socket连接实例包括一个InputStream和一个OutputStream。
+- 使用Socket类的close方法关闭连接。
+
+#java-sandbox socket.TCPEchoClient
+
+```java
+public static void main(String[] args) throws IOException {
+    Socket socket = new Socket("127.0.0.1", 8085);
+    System.out.println("Connected to server...sending echo string");
+
+    byte[] data = "echo hello world".getBytes();
+
+    InputStream inputStream = socket.getInputStream();
+    OutputStream outputStream = socket.getOutputStream();
+
+    //输出传输数据
+    outputStream.write(data);
+    int totalBytesRcvd = 0;
+    int bytesRcvd;
+
+    while (totalBytesRcvd < data.length) {
+        //循环read，TCP协议并不能确定在read()和write()方法中锁发送信息的界限，虽然我们只用了一个write()方法来发送反馈字符串，回馈服务器也可能从多个块中接受该信息。
+        //即使回馈字符串在服务器上存在于一个块中，在返回的时候，也可能被TCP协议分隔成多个部分。
+        if ((bytesRcvd = inputStream.read(data, totalBytesRcvd,
+                                          data.length - totalBytesRcvd)) == -1) {
+            throw new SocketException("Connection closed prematurely");
+        }
+        totalBytesRcvd += bytesRcvd;
+    } // data array is full
+
+    System.out.println("Received: " + new String(data));
+
+    socket.close(); // Close the socket and its streams
+}
+```
 
