@@ -309,3 +309,339 @@ public static void main(String[] args) throws IOException {
 }
 ```
 
+
+
+#### TCP服务器端
+
+服务器端的工作是建立一个通信终端，并被动地等待客户端的连接。
+
+典型的TCP服务器有如下两步工作：
+
+- 创建一个ServerSocket实例并指定本地端口，此套接字的功能是侦听该指定端口收到的连接。
+- 重复执行：
+  - 调用ServerSocket的accept()方法以获取下一个客户端连接。基于新建立的客户端连接，创建一个Socket实例，并由accept()方法返回。
+  - 使用所返回的Socket实例的InputStream和OutputStream与客户端进行通信。
+  - 通信完成后，使用Socket类的close()方法关闭该客户端套接字的连接。
+
+#java-sandbox socket.TCPEchoServer
+
+```java
+public static void main(String[] args) throws IOException {
+    ServerSocket serverSocket = new ServerSocket(8085);
+    int recvMsgSize;// Size of received message
+    byte[] receiveBuf = new byte[BUFSIZE]; // Receive  buffer
+    while (true) {// Run forever, accepting and servicing connections
+        // Get client connection
+        Socket clntSock = serverSocket.accept();
+        SocketAddress clientAddress = clntSock.getRemoteSocketAddress(); //return InetSocketAddress
+        InputStream in = clntSock.getInputStream();
+        OutputStream out = clntSock.getOutputStream();
+        // Receive until client closes connection, indicated  by -1 return
+        while ((recvMsgSize = in.read(receiveBuf)) != -1) {
+            out.write(receiveBuf,0,recvMsgSize);
+        }
+        //关闭套接字连接可以释放与连接相关联的系统资源，对于服务器端是必须的，因为每一个程序所能打开的Socket实例数量受到系统的限制。
+        clntSock.close();
+    }
+}
+```
+
+
+
+### UDP套接字
+
+UDP协议只实现了两个功能
+
+- 在IP协议的基础上添加了另一层地址（端口）
+- 对数据传输过程中可能产生的数据错误进行了检测，并抛弃已经损坏的数据。
+
+UDP协议与邮件通信：寄包裹或信件时，不需要进行连接，但是你得为每个包裹和信件指定目的地址。每条信息即数据报文，datagram，负载了自己的地址信息，并与其他信息相互独立。
+
+
+
+UDP套接字特征
+
+- UDP套接字在使用前不需要进行连接，类似信箱，一旦被创建，UDP套接字可以用来连续地向不同的地址发送信息，或从任何地址接受信息。
+- UDP套接字保留边界信息
+- UDP协议锁提供的端到端传输服务是尽力而为的，尽可能地传送信息，但并不保证信息一定能成功到达目的地址，而且信息到达的顺序与其发送顺序不一定一致，因此UDP套接字的程序必须准备好处理信息的丢失和重排。
+
+UDP相比TCP优势：
+
+- 效率高：如果应用程序只交换非常少量的数据，例如从客户端到服务器端的简单请求消息，或一个反向的响应消息，TCP连接的建立阶段就至少要传输其两倍的信息（还有两倍的往返延迟时间）
+- 灵活性：如果除可靠的字节流服务外，还有其他的需求，UDP协议则提供了一个最小开销的平台来满足任何需求的实现。
+
+
+
+使用UDP套接字
+
+- DatagramPacket：接受数据
+- DatagramSockets：发送数据
+
+
+
+#### UDP客户端
+
+UDP客户端首先向被动等待连接的服务器发送一个数据报文。
+
+一个典型的UDP客户端主要执行以下三步：
+
+- 创建一个DatagramSocket实例，可以选择对本地地址和端口号进行设置。
+- 使用DatagramSocket类的send()和receive()方法来发送和接受DatagramPacket实例，进行通信。
+- 通信完成后，使用DatagramSocket类的close()方法来销毁该套接字。
+
+与Socket类不同，DatagramSocket实例在创建时并不需要指定目的地址。这也是TCP和UDP协议最大的不同点之一。
+
+在数据交换前，TCP套接字必须跟特定的主机和另一个端口号上的TCP套接字建立连接，之后，在连接关闭前，该套接字就只能与相连接的那个套接字通信。
+
+而UDP套接字在进行通信前则不需要建立连接，每个数据报文都可以发送到或接收于不同的目的地址。（DatagramSocket类的connect()方法确实允许指定远程地址和端口，但是该功能可选）
+
+#java-sandbox socket.UDPEchoClientTimeout
+
+```java
+/**
+ * UDP客户端
+ *
+ * @author Eddie
+ * @Date 2021/2/23
+ * @since 1.0
+ */
+public class UDPEchoClientTimeout {
+
+    public static final int TIMEOUT = 3000;
+    public static final int MAXTRIES = 5;
+
+
+    public static void main(String[] args) throws IOException {
+        DatagramSocket datagramSocket = new DatagramSocket();
+        datagramSocket.setSoTimeout(TIMEOUT);// Maximum receive blocking time (milliseconds)
+        byte[] byteToSend = "echo hello world".getBytes();
+        InetAddress serverAddress = InetAddress.getByName("127.0.0.1");
+        //该实例能够将数据报文发送给任何UDP套接字，我们没有指定本地地址和端口号，因此程序将自动选择本地地址和端口号，如果需要
+        //可以通过setLocalAddress() 和 setLocalPort()或构造函数，显式设置本地地址和端口
+        DatagramPacket sendPacket = new DatagramPacket(byteToSend, byteToSend.length, serverAddress, 8085);
+
+        DatagramPacket revPacket = new DatagramPacket(new byte[byteToSend.length], byteToSend.length);
+        int tries = 0;
+        boolean receiveResponse = false;
+        do {
+            // Send the echo string
+            datagramSocket.send(sendPacket);
+            try {
+                // Attempt echo reply reception
+                datagramSocket.receive(revPacket);
+                if (!revPacket.getAddress().equals(serverAddress)) {
+                    //check source
+                    //由于数据报文可能发送自任何地址，需要验证锁接收到的数据报文，检查其原地址和端口号是否与指定目标服务器地址和端口号相匹配
+                    throw new IOException("Received packet from an unknown source");
+                }
+                receiveResponse = true;
+            } catch (InterruptedIOException e) {//如果在接收到数据之前超时，则抛出此异常，超时时间以毫秒为单位。
+                tries += 1;
+                System.out.println("Timed out, " + (MAXTRIES - tries)
+                        + " more tries...");
+            }
+        } while ((!receiveResponse) && (tries < MAXTRIES));
+
+        if (receiveResponse) {
+            System.out.println("received:" + new String(revPacket.getData()));
+        } else {
+            System.out.println("No response -- giving up.");
+        }
+
+        datagramSocket.close();
+    }
+
+
+}
+```
+
+
+
+#### UDP服务器端
+
+典型的UDP服务器执行以下三步：
+
+- 创建一个DatagramSocket实例，指定本地端口号，并可以选择指定本地地址。此时，服务器已经准备好从任何客户端接收数据报文。
+- 使用DatagramSocket类的receiver()方法来接收一个DtagramPacket实例。当receive()方法返回时，数据报文就包含了客户端的地址，这样就知道回复信息应该发送到什么地方。
+- 使用DatagramSocket类的send()和receive()方法来发送和接收DatagramPackets实例，进行通信。
+
+```java
+/**
+ * UDP服务器端
+ *
+ * @author Eddie
+ * @Date 2021/2/23
+ * @since 1.0
+ */
+public class UDPEchoServer {
+
+    public static final int ECHOMAX = 255;
+
+    public static void main(String[] args) throws IOException {
+
+        DatagramSocket datagramSocket = new DatagramSocket(8085);
+
+        DatagramPacket packet = new DatagramPacket(new byte[ECHOMAX], ECHOMAX);
+        while (true) {
+            //阻塞等待，直到接收到客户端发来的数据报文（或超时），由于没有连接，每个数据报文都可能发送自不同的客户端
+            //数据报文自身包含其发送者的（客户端）源地址和端口号
+            datagramSocket.receive(packet);
+            System.out.println("Handling client at " +
+                    packet.getAddress().getHostAddress()
+                    + " on port " + packet.getPort());
+            datagramSocket.send(packet);
+            //处理了接收到的消息后，数据包的内部长度将设置为刚处理过的消息的长度，而这可能比缓冲区的原始长度短。
+            //如果接收新信息前不对内部长度进行重置，后续的消息一旦长于前一个消息，将会被截断。
+            packet.setLength(ECHOMAX);
+        }
+    }
+}
+
+```
+
+
+
+**UDP服务器为所有的通信使用同一个套接字，这点与TCP服务端不同，TCP服务器为每个成功返回的accept()方法创建一个新的套接字。**
+
+
+
+#### 使用UDP套接字发送和接收信息
+
+比较TCP和UDP套接字进行通信的不同点
+
+1.消息的边界信息
+
+- UDP协议保留了消息的边界信息。DatagramSocket的每一次receive()调用最多只能接收调用一次send()方法所发送的数据。而且不同的receive()方法调用绝对不会返回同一个send()方法调用所发送的数据。
+
+2.缓存区，网络错误重试机制
+
+- 当在TCP套接字的输出流上调用write()方法返回后，所有的调用者都知道数据已经被复制到一个传输缓存区中，实际上此时数据可能已经被传送，也可能还没有被传送。
+- UDP协议没有提供从网络错误中恢复的机制，不对可能需要重传的数据进行缓存。这就意味着，当send()方法调用返回时，消息已经被发送到了底层的传输信道中，并正处在（或即将处在）发送途中。
+
+3.数据报文截断
+
+消息从网络到达后，其所包含数据被read()方法或receive()方法返回前，数据存储在一个先进先出FIFO的接收数据队列中
+
+- 对于已连接的TCP套接字来说，所有已接收但还未传送的字节都看作是一个连续的字节序列。
+- 对于UDP套接字来说，接收到的数据可能来自于不同的发送者。一个UDP套接字所接收到的数据存放在一个消息队列中，每个消息都关联了其源地址信息。每次recevie()调用只返回一条消息。然而，如果receive()方法在一个缓存区大小为n的DatagramPacket实例中调用，而接收队列中的第一条消息长度大于n，则receive()方法只返回这条消息的前n个字节，超出部分的其他字节将自动被丢弃，而且对接收程序也没有任何消息丢失的提示！
+
+所以，接收者应该提供一个有**足够大的缓存空间的DatagramPakcet实例**，以完整存放调用receive()方法时应用程序协议所允许的最大长度的消息。这个技术能保证数据不会丢失。
+
+一个DatagramPacket实例中所运行传输的最大数据量为65507字节，即UDP数据报文所能负载的最多数据。因此使用一个有65600字节左右缓存数组的数据报总是安全的。
+
+每一个DatagramPacket实例都包含一个内部消息长度值，而该实例一接收到新消息，这个长度值都可能改变（以反映实际接收的消息的字节数）
+
+**如果一个应用程序使用同一个DatagramPacket实例多次调用receive()方法，每次调用钱就必须显式地将消息的内部长度重置为缓存区的实际长度。**
+
+
+
+
+
+## 发送和接收数据
+
+TCP/IP协议以字节的方式传输用户数据，并没有对其进行检查和修改。
+
+TCP/IP协议唯一的约束是信息必须在块（chunks）中发送和接收，而块的长度必须是8位的倍数。
+
+因此，我们可以认为在TCP/IP协议中传输的信息是字节序列。鉴于此，我们可以进一步把传输的信息看做数字序列或数组，每个数字的取值范围是0-255，这与8位2进制数值的范围是一致的。
+
+
+
+### 信息编码
+
+#### 基本整型
+
+Java，int数据类型32位需要4个字节，short16位需要2个字节，long 64位需要8个字节。
+
+DataOutputStream ：允许将基本数据类型，写入一个流中，writexxx方法将按照big-endian顺序，将证书以适当大小的二进制补码的形式写到流中
+
+ByteArrayOutputStream：获取写到流中的字节序列，并将其转换成一个字节数组。
+
+#### 字符串和文本
+
+将文本视为由符号和字符组成。实际上，每个String实例都对应了一个字符序列（char[]类型数组）。一个字符在Java内部表示为一个整数，如'a' ， =97
+
+一组符号和一组整数之间的映射称为编码字符集。比如ASCII编码字符集，将英语、数字、标点符号和一些特殊符号映射成0-127的整数。由于128无法囊括全世界的字符语言，不够用，所以Java使用了Unicode的国际标准编码字符集来表示char型和String型值。
+
+Unicode映射0-65535之间，Unicode包含了ASCII：每个ASCII码中定义的符号在Unicode中所映射整数与其在ASCII码中映射的整数相同。
+
+对于每个整数值都比255小的一小组字符，则不需要其他信息，因为其每个字符都能够作为一个单独的字节进行编码，对于可能使用超过一个字节的大整数的编码方式，就有多种方式在线路上对其进行编码。因此，发送者和接收者需要对这些大整数如何表示成字节序列统一意见，即编码方案。
+
+编码字符集和字符的编码方案结合起来，称为字符集charset
+
+Java提供了对任意字符集的支持，而且每种实现都必须支持一下至少一种字符集：US-ASCII （ASCII的另一个名字）、ISO-8859-1、UTF-8、UTF-16BE、UTF-16LE、UTF-16
+
+调用String实例的 getBytes()方法，将返回一个字节数组，该数组根据平台默认字符集对String实例进行了编码。
+
+#### 位操作：布尔值编码
+
+位图的主要思想是在整型数据中的每一位都能对一个布尔值编码，0-false 1-true
+
+要操作位图，需要使用Java的位操作方法来设置和清除单独的一位。
+
+掩码（mask），是一个整数值，其中有一位或多位被设置为1，其余各位都被清空，设置为0.
+
+处理int大小的位图和掩码（32位），使用与、或来对位图的特定位进行设置和清除
+
+1.要设置int变量中的特定一位（从0设置为1），需要将该int值与特定位对应的掩码进行按位或操作，掩码的对应位设置为1，与int变量或，int变量对应位也被设置为1.
+
+2.要清空特定一位，按位与，掩码对应位设置为0
+
+3.通过将相应的所有掩码按位或，再与int变量按位与，可以一次设置和清空多位。
+
+3.测试一个整数的特定位是否已经被设置为1 ，可以将该整数与特定位对应的掩码（对应位设置为1）进行按位与，在将操作结果与0进行比较，如果不是0，则已经被设置为1
+
+
+
+### 组合输入输出流
+
+可以将Socket实例的OutputStream包装在一个BufferedOutputStream实例中，这样可以先将字节暂时缓存在一起，然后再一次全部发送到底层的通信信道中，以提高程序的性能。还可以再将这个BufferedOutputStream实例包裹在一个DataOutputStream实例中，以实现发送基本数据类型的功能。
+
+```
+Socket socket = new Socket(server, port);
+DataOutputStream out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+```
+
+![img](https://new.51cto.com/files/uploadimg/20090215/162257387.jpg)
+
+先将基本数据的值一个个写入DataOutputStream中，DataOutputStream再将这些数据以二进制的形式写入BufferedOutputStream将三次写入的数据缓存起来，然后再由BufferedOutputStream一次性地写入套接字的OutputStream，最后由OutputStream将数据发送到网络。
+
+
+
+### 成帧与解析
+
+将数据转换成在线路上传输的格式只完成了一半的工作，在接收端还必须将接收到的字节序列还原成原始信息。应用程序协议通常处理的是由一组字段组成的离散信息。
+
+成帧技术（framing）技术则解决了接收端如何定位消息的首尾位置的问题。无论信息是编码成了文本，多字节二进制数，或者是二者的结合，应用程序协议必须指定消息的接收者如何确定何时消息已完整接收。
+
+
+
+UDP有消息边界，DatagramPacket负载的数据有一个确定的长度，接收者能够准确地知道消息的结束位置。
+
+TCP套接字发来的消息，无法知道一个完整的消息需要读取多少字节。
+
+如果接收者试图从套接字中读取比消息本身更多的字节，将可能发生以下两种情况：
+
+- 如果信道中没有其他消息，接收者将阻塞等待，同时无法处理接收到的消息；如果发送者也在等待接收端的响应消息，则会形成死锁。
+- 如果信道中还有其他消息，则接收者会将后面的消息的一部分读到第一条消息中去，这将产生一些协议错误。
+
+主要有两个技术使接收者能够准确地找到消息的结束位置：
+
+- 定界符（Delimiter-based）：消息的结束由一个唯一的标记指出，即发送者在传输完数据后显式添加的一个特殊字节序列。这个特殊标记不能在传输的数据中出现。
+- 显式长度（Explicit length）：在变长字段或消息前附加一个固定大小的字段，用来指示该字段或消息中包含了多少字节。
+
+
+
+### Java特定编码
+
+如果你知道通信双方都使用Java实现，而且你拥有对协议的完全控制权，那么可以使用Java的内置工具
+
+- RMI：能够调用不同Java虚拟机上的方法，并隐藏了所有繁琐的参数编码解码细节。
+- Serializable接口：序列化处理了将实际Java对象转换成字节序列的工作，因此可以在不同虚拟机之间传递Java对象实例。
+
+
+
+
+
+## 多任务处理
+
