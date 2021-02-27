@@ -1,4 +1,4 @@
-# Java TCP/IP Socket
+# ![image-20210227190606451](/Users/edie/Library/Application Support/typora-user-images/image-20210227190606451.png)Java TCP/IP Socket
 
 代码根路径：java-sandbox.socket包
 
@@ -30,7 +30,7 @@
 
 IP协议（互联网协议 Internet Protocol）、TCP协议（传输控制协议 Transmission Control Protocol）、UDP协议（用户数据报协议 User Datagram Protocol）
 
-![img](https://new.51cto.com/files/uploadimg/20090215/151046863.jpg)
+![image-20210227150151982](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227150152.png)
 
 
 
@@ -144,7 +144,7 @@ NAT设备的功能类似一个路由器，转发分组报文时将转换（重�
 
 Socket 是一种抽象层，应用程序通过它来发送和接受数据，就像应用程序打开一个文件句柄，将数据读写到稳定的存储器上一样。
 
-![153421796.jpg (576×274)](https://new.51cto.com/files/uploadimg/20090215/153421796.jpg)
+![image-20210227150203064](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227150203.png)
 
 
 
@@ -602,7 +602,7 @@ Socket socket = new Socket(server, port);
 DataOutputStream out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 ```
 
-![img](https://new.51cto.com/files/uploadimg/20090215/162257387.jpg)
+![image-20210227150116043](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227150116.png)
 
 先将基本数据的值一个个写入DataOutputStream中，DataOutputStream再将这些数据以二进制的形式写入BufferedOutputStream将三次写入的数据缓存起来，然后再由BufferedOutputStream一次性地写入套接字的OutputStream，最后由OutputStream将数据发送到网络。
 
@@ -671,5 +671,597 @@ write()方法调用也会阻塞等待，直到最后一个字节成功写入到�
 
 
 
+#### 多接受者
 
+有两种类型的一对多服务：广播、多播
+
+广播：
+
+（本地）网络中的所有主机都会接收到一份数据副本
+
+IPV4本地广播地址：255.255.255.255
+
+多播：
+
+消息只是发送给一个多播地址，网络只是将数据分发给那些表示想要接收发送到该多播地址的数据的主机。
+
+IPV4多播地址范围：224.0.0.0-239.255.255.255,IPV6任何由FF开头的地址。
+
+Java多播功能通过MulticastSocket实例进行通信，一个UDP套接字
+
+接收端需要一种机制来通知网络它对发送到某一特定地址的消息感兴趣，以使网路将数据包转发给它。MulticastSocket类的joinGroup()方法实现。接受多播的消息
+
+单播发送者和多播发送者仅有的重要区别：
+
+- 对给定地址是否是多播地址进行了验证
+
+```java
+InetAddress destAddr = InetAddress.getByName();
+if(destAddr.isMulticastAddress()){}
+```
+
+
+
+- 为多播数据报文设置了初始的TTL值（time to live）。每个IP数据报文中都包含了一个TTL，他被初始化为某个默认值，并在每个路由器转发该报文时递减。当TTL为0时，丢弃该数据报文。通过设置TTL的初始值，我们可以根据数据包从发送者开始所能传递到的最远距离。
+
+决定使用广播还是多播
+
+互联网广播的范围是限定在一个本地广播网络之内的，并对广播接受者的位置进行了严格的限制。
+
+多播通信可能包含网络中任何位置的接受者，因此多播的好处是它能够覆盖一组分布在各处的接受者。
+
+IP多播的不足在于接受者必须知道要加入的多播组的地址，而接受广播信息则不需要指定地址信息。
+
+所有主机默认情况下都可以接收广播，因此，在一个网络中向所有主机询问打印机在哪是件容易的事。
+
+
+
+## 控制默认行为
+
+### Keep-Alive
+
+如果一段时间内没有数据交换，通信的每个终端可能都会怀疑对方是否还处于活跃状态。
+
+Keep-alive机制在经过一段不活动时间后，将向另一个终端发送一个探测消息。如果另一个终端还处于活跃状态，它将回复一个确认消息。
+
+如果经过几次尝试后依然没有收到另一终端的确认消息，则终止发送探测消息，关闭套接字，并在下一次尝试I/O操作时抛出一个异常。
+
+默认情况下，keep-alive机制是关闭的。通过Socket 的 setKeepAlive()方法为true来开启。
+
+
+
+### 发送和接收缓存区的大小
+
+一旦创建了一个Socket或DatagramSocket实例，操作系统就必须为其分配缓存区以存放接收和要发送的数据。
+
+Socket、DatagramSocket设置和获取发送接收缓存区的大小：
+
+```java
+int getReceiveBufferSize()
+void setReceiveBufferSize(int size)
+int getSendBufferSize()
+void setSendBufferSize(int size)
+```
+
+ServerSocket设置接收缓存区的大小
+
+```java
+int getReceiveBufferSize()
+void setReceiveBufferSize(int size)
+```
+
+
+
+### 超时
+
+很多I/O操作如果不能立即完成就会阻塞等待：
+
+- 读操作将阻塞等待直到至少有一个字节可读
+- 接收操作将阻塞等待直到成功建立连接
+
+Socket、ServerSocket、DatagramSocket  设置最大阻塞时间
+
+```
+int getSoTimeout()
+void setSoTimeout(int timeout)
+```
+
+用于获取和设置读、接收数据操作以及accept操作的最长阻塞时间。**超时设置为0表示该操作永不超时**。如果阻塞超过了超时时长，则抛出一个异常。
+
+
+
+### 地址重用
+
+在某些情况下，可能希望能够将多个套接字绑定到同一个套接字地址。
+
+对于UDP多播的情况，在同一个主机上可能有多个应用程序加入了相同的多播组。
+
+对于TCP，当一个连接关闭后，通信的一端（或两端）必须在“Time-Wait”状态上等待一段时间，以对传输途中丢失的数据包进行清理。不幸的是，通信终端可能无法等到Time-Wait结束。
+
+对于这两种情况，都需要能够与正在使用的地址进行绑定的能力，这就要求实现地址重用。
+
+Socket,ServerSocket,DatagramSocket设置获取地址重用：
+
+```
+boolean getReuseAddress()
+void setReuseAddress(boolean on)
+```
+
+
+
+### 消除缓冲延迟
+
+TCP协议将数据缓存起来直到足够多时一次发送，以避免发送过小的数据包而浪费网络资源。虽然这个功能有利于网络，但应用程序可能对所造成的缓冲延迟不能容忍。
+
+Socket设置缓冲延迟，设置为**true**禁用缓存功能
+
+```
+boolean getTcpNoDelay()
+void setTcpNoDelay(boolean on)
+```
+
+
+
+### 关闭后停留
+
+当调用套接字的close()方法后，即使套接字的缓冲区中海油没有发送的数据，它也将立即返回。这样不发送完所有数据可能导致的问题是主机将在后面的某个时刻发生故障。其实可以选择让close()方法“停留”或阻塞一段时间，直到所有数据都已经发送并确认了，或发生了超时。
+
+Socket：
+
+```
+int getSoLinger()
+void setSoLinger(boolean on, int linger)
+```
+
+在setSoLinger()并将其设置为true，那么后面再调用close（）方法将阻塞等待，直到远程终端对所有数据都返回了确认信息，或发生了指定的超时，如果发生超时，TCP连接将强行关闭。
+
+### 关闭连接
+
+调用Socket的close()方法将同时终止两个方向（输入和输出）的数据流。
+
+一旦一个终端（客户端或服务器端）关闭了套接字，它将无法再发送或接收数据。这就意味着close()方法只能在调用者完成通信之后用来给另一端发送信号。
+
+Socket类的shutdownInput和shutdownOutput方法能够将输入输出流相互独立地关闭。
+
+当调用shutdownInput后，套接字的输入流将无法使用。任何没有发送的数据都将毫无提示地被丢弃，任何想从套接字的输入流读取数据的操作都将返回-1.
+
+当Socket调用shutdownOutput后，套接字的输出流将无法再发送数据，任何尝试向输出流写数据的操作都将抛出一个IOException异常。在调用shutdownOutput之前写出的数据可能能够被远程套接字读取，之后，在远程套接字输入流上的读操作将返回-1.
+
+应用程序调用shutdownOutput后还能继续从套接字读取数据，在调用shutdownInput也能够继续写数据。
+
+
+
+
+
+## NIO
+
+### 为什么需要NIO？
+
+### Channel & Buffer	
+
+Channel实例代表了一个与设备的连接，通过它可以进行输入输出操作。
+
+对于TCP协议，可以使用ServerSocketChannel和SocketChannel
+
+```java
+SocketChannel clntChan = SocketChannel.open(); 
+ServerSocketChannel servChan = ServerSocketChannel.open();
+```
+
+
+
+Channel使用的不是流，而是缓冲区来发送或读取数据。
+
+与流不同，缓冲区是有固定的、有限的容量，并由内部（但可以被访问）状态记录了有多少数据放入或取出。
+
+```java
+ByteBuffer buffer = ByteBuffer.allocate(CAPACITY);
+
+ByteBuffer buffer = ByteBuffer.wrap(byteArray); //通过已有数组来创建
+```
+
+
+
+NIO强大功能来自于channel的非阻塞特性。
+
+```
+clntChan.configureBlocking(false);
+```
+
+在非阻塞式信道上调用一个方法总是会立即返回。这种调用的返回值指示了所请求的操作完成的程度。
+
+例如在一个非阻塞式ServerSocketChannel上调用accept()方法，如果有连接请求在等待，则返回客户端SocketChannel，否则返回null。
+
+SocketChannel上调用connect方法，可能会在连接建立前返回，如果在返回前已经成功建立了连接，则返回true，否则返回false。对于后一种情况，任何试图发送或接受数据的操作都将抛出NotYetConnectedException异常，因此，需要通过持续调用finishConnect方法来轮询连接状态，该方法在连接成功钱一直返回false，这种忙等待，非常浪费系统资源。
+
+Selector
+
+可以避免使用非阻塞式客户端中很浪费的忙等方法。
+
+例如考虑一个即时消息服务器，可能有上千个客户端同时连接到了服务器，但在任何时刻，只有非常少量的（甚至可能没有）消息需要读取和分发。这就需要一种方法阻塞等待，直到至少有一个信道可以进行IO操作，并指出是哪个信道。NIO选择器就可以实现。
+
+一个Selector实例可以同时检查（如果需要，也可以等待）一组信道的IO状态，一个多路开关选择器，管理多个信道上的IO操作。
+
+只有非阻塞信道才能注册选择器
+
+### Buffer详解
+
+在NIO中，数据的读写操作始终是与缓冲区相关联的。Channel将数据读入缓冲区，然后我们又从缓冲区访问数据。写数据时，首先将要发送的数据按顺序填入缓冲区。
+
+缓冲区只是一个列表，所有元素都是基本数据类型（通常为字节型），缓冲区是定长的。
+
+ByteBuffer是最常用的缓冲区
+
+- 提供了读写其他数据类型的方法
+- 信道的读写方法只接收ByteBuffer。
+
+#### Buffer索引
+
+在读写数据时，它有内部状态来跟踪缓冲区的当前位置，以及有效可读数据的结束位置。
+
+因此每个缓冲区维护了指向其元素列表的4个索引
+
+| 索引     | 描述                                | 用法                                              |
+| -------- | ----------------------------------- | ------------------------------------------------- |
+| capacity | 缓冲区中的元素总数（不可修改）      | int capacity()                                    |
+| position | 下一个要读写的元素（从0开始）       | int position(); Buffer position(int newPosition); |
+| limit    | 第一个不可读写元素                  | int limit(); Buffer limit(int newLimit);          |
+| mark     | 用户选定的position的前一个位置或为0 | Buffer mark(); Buffer reset();                    |
+
+position和limit之间的距离指示了可读写的字节数。
+
+ByteBuffer: 􏹼􏹽􏰖􏳫剩余字节
+
+```
+boolean hasRemaining() //缓冲区至少还有一个元素时，返回true
+int remaining() //返回剩余元素个数
+```
+
+0 􏼾 < mark 􏼾 < position 􏼾 < limit 􏼾 < capacity
+
+mark变量的值记录了一个将来可返回的位置，reset方法则将position的值还原成上次调用mark方法后的position值
+
+**所有新创建的Buffer实例都没有定义其mark值**，在调用mark方法前，任何试图使用reset方法来设置position的值的操作都将抛出InvalidMarkException异常。
+
+ByteBuffer创建方法
+
+![image-20210227143730482](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227143730.png)
+
+通过包装的方法创建的缓冲区保留了被包装数组内保存的数据。实际上，wrap()方法只是简单地创建了一个具有指向被包装数组的引用的缓冲区，该数组称为后援数组。
+
+对后援数组中的数据做的任何修改都将改变缓冲区中的数据，反之亦然。
+
+如果为wrap()方法指定了偏移量offset和长度length，缓冲区将使用整个数组为后援数组，同时将position和limit的值初始化为offset和offset+length。在偏移量 之前和长度之后的元素依然可以通过缓冲区访问。
+
+在缓冲区上调用array()方法获得后援数组的引用。
+
+调用arrayOffset()方法，获得缓冲区中第一个元素在后援数组的偏移量。
+
+
+
+**直接缓冲区：**
+
+![image-20210227144928055](/Users/edie/Library/Application Support/typora-user-images/image-20210227144928055.png)
+
+![image-20210227145000395](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227145000.png)
+
+
+
+为ByteBuffer进行直接缓冲区分配：
+
+```
+ByteBuffer byteBufDirect = ByteBuffer.allocateDirect(BUFFERSIZE);
+```
+
+
+
+#### 存储和接收数据
+
+get、put 向缓冲区获取数据，写入数据
+
+channel的read和write隐式调用了ByteBuffer实例的get和put方法
+
+相对位置：
+
+```java
+byte get()
+ByteBuffer get(byte[] dst)
+ByteBuffer get(byte[] dst, int offset, int length)
+ByteBuffer put(byte b)
+ByteBuffer put(byte[] src)
+ByteBuffer put(byte[] src, int offset, int length)
+ByteBuffer put(ByteBuffer src)
+```
+
+绝对位置
+
+```java
+byte get(int index)
+ByteBuffer put(int index, byte b)
+```
+
+![image-20210227145827989](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227145828.png)
+
+![image-20210227145847206](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227145847.png)
+
+
+
+#### 准备Buffer：clear，flip，rewind
+
+![image-20210227150622734](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227150622.png)
+
+clear方法不会改变缓冲区中的数据，只是简单地重置了缓冲区的主要索引值。考虑一个最近使用put或read存入了数据的缓冲区，其position值指示了不包含有效字符的第一个元素的位置。
+
+clear执行后，put或read的调用，将数据从第一个元素开始填入缓冲区，直到填满了limit所指定的限制，其值等于capacity
+
+```java
+// Start with buffer in unknown state 
+buffer.clear(); // Prepare buffer for input, ignoring existing state 
+channel.read(buffer); // Read new data into buffer, starting at first element
+```
+
+
+
+flip方法用来将缓冲区准备为数据传送状态，这通过将limit设置为position当前值，再将position的值设为0来实现
+
+后续的get、write方法将从缓冲区的第一个元素开始检索数据，直到到达limit指示的位置。
+
+```java
+// ... put data in buffer with put() or read() ... 
+buffer.flip(); // Set position to 0, limit to old position 
+while (buffer.hasRemaining()) 
+channel.write(buffer);// Write buffer data from the first element up to limit 
+```
+
+
+
+rewind方法将position位置设为0，并使mark值无效。
+
+假设在写出缓存区的所有数据之后，想回到缓冲区的开始位置再重写一次相同的数据（例如，想要同样的数据发送给另一个信道），使用rewind方法。
+
+```java
+// Start with buffer ready for writing
+while (buffer.hasRemaining()) // Write all data to network 
+networkChannel.write(buffer);
+
+buffer.rewind(); // Reset buffer to write again
+while (buffer.hasRemaining()) // Write all data to logger 
+loggerChannel.write(buffer);
+```
+
+
+
+#### 压缩Buffer中的数据
+
+compact方法将position与limit之间的元素复制到缓冲区的开始位置，从而为后续的put、read调用让出空间。
+
+position的值将设置为要复制的数据的长度，limit的值将设置为capacity，mark则变成未定义。
+
+![image-20210227154956964](/Users/edie/Library/Application Support/typora-user-images/image-20210227154956964.png)
+
+#### Buffer透视：
+
+![image-20210227155327863](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227155327.png)
+
+假设要将在网络上发送的所有数据都写进日志：
+
+```java
+// Start with buffer ready for writing
+ByteBuffer logBuffer = buffer.duplicate();
+while (buffer.hasRemaining()) // Write all data to network 
+networkChannel.write(buffer);
+while (logBuffer.hasRemaining()) // Write all data to logger
+loggerChannel.write(buffer);
+```
+
+使用了缓存区复制操作，向网络写数据和写日志就可以在不同的线程中并行进行。
+
+slice方法用于创建一个共享了原始缓冲区子序列的新缓冲区。
+
+新缓冲区的position值为0，而其limit和capacity的值都等于原始缓冲区的limit和position的差值。
+
+![image-20210227161734608](/Users/edie/Library/Application Support/typora-user-images/image-20210227161734608.png)
+
+![image-20210227161750371](/Users/edie/Library/Application Support/typora-user-images/image-20210227161750371.png)
+
+
+
+### 流(TCP)信道详解
+
+SocketChannel 、 ServerSocketChannel
+
+SocketChannel是相互连接的终端进行通信的信道
+
+![image-20210227163548906](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227163548.png)
+
+ServerSocketChannel
+
+![image-20210227163842962](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227163843.png)
+
+ServerSocket的连接性测试：
+
+```java
+boolean finishConnect()
+boolean isConnected()
+boolean isConnectionPending()
+```
+
+![image-20210227164302588](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227164302.png)
+
+
+
+### Selector详解 
+
+![image-20210227164418763](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227164418.png)
+
+#### 在信道中注册
+
+![image-20210227164823430](/Users/edie/Library/Application Support/typora-user-images/image-20210227164823430.png)
+
+![image-20210227165151693](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227165151.png)
+
+示例：
+
+```java
+SelectionKey key = clientChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);//注册一个信道，支持读写操作
+```
+
+![image-20210227165355529](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227165355.png)
+
+![image-20210227165600708](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227165600.png)
+
+
+
+#### 选取和识别准备就绪的信道
+
+在信道上注册了选择器，并由关联的键指定了感兴趣的IO操作集后，只需要坐下来等待IO，这需要使用选择器来完成
+
+Selector：等待信道准备就绪
+
+```java
+int select()
+int select(long timeout)
+int selectNow()
+Selector wakeup()
+```
+
+![image-20210227173141276](/Users/edie/Library/Application Support/typora-user-images/image-20210227173141276.png)
+
+![image-20210227173429234](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227173429.png)
+
+#### 信道附件
+
+![image-20210227173646556](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227173646.png)
+
+![image-20210227173653480](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227173653.png)
+
+#### Selector总结
+
+![image-20210227173721990](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227173722.png)
+
+
+
+#### 数据报（UDP）信道
+
+![image-20210227174216414](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227174216.png)
+
+![image-20210227174231761](/Users/edie/Library/Application Support/typora-user-images/image-20210227174231761.png)
+
+![image-20210227174708204](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227174708.png)
+
+![image-20210227174721979](/Users/edie/Library/Application Support/typora-user-images/image-20210227174721979.png)
+
+
+
+
+
+### Socket深入剖析
+
+Scoket实例所关联的一些信息简化视图
+
+![image-20210227182527519](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227182527.png)
+
+![image-20210227183002291](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227183002.png)
+
+![image-20210227183050662](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227183050.png)
+
+![image-20210227183058732](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227183058.png)
+
+#### 缓冲和TCP
+
+![image-20210227190546325](/Users/edie/Library/Application Support/typora-user-images/image-20210227190546325.png)
+
+![](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227190606.png)
+
+![image-20210227190647577](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227190647.png)
+
+![image-20210227190638915](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227190639.png)
+
+图6.3
+
+![image-20210227191208007](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227191208.png)
+
+图6.4
+
+![image-20210227191405743](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227191405.png)
+
+![image-20210227191519843](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227191519.png)
+
+
+
+#### 死锁风险
+
+![image-20210227192139410](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227192139.png)
+
+![image-20210227192500001](/Users/edie/Library/Application Support/typora-user-images/image-20210227192500001.png)
+
+![image-20210227192519605](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227192519.png)
+
+![image-20210227192826700](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227192826.png)
+
+#### 性能相关
+
+![image-20210227194351350](/Users/edie/Library/Application Support/typora-user-images/image-20210227194351350.png)
+
+#### TCP套接字的生命周期
+
+新的Socket实例创建后立即就能用于发送和接收数据，当Socket实例返回时，它已经连接到了一个远程终端，并通过协议的底层实现完成了TCP消息或握手信息的交换。
+
+##### 连接
+
+![image-20210227194746735](/Users/edie/Library/Application Support/typora-user-images/image-20210227194746735.png)
+
+![image-20210227200435885](/Users/edie/Library/Application Support/typora-user-images/image-20210227200435885.png)
+
+![image-20210227200454150](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227200454.png)
+
+![image-20210227200631083](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227200631.png)
+
+![image-20210227200842703](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227200842.png)
+
+![image-20210227200909494](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227200909.png)
+
+![image-20210227200921335](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227200921.png)
+
+![image-20210227200934816](/Users/edie/Library/Application Support/typora-user-images/image-20210227200934816.png)
+
+![image-20210227201158577](/Users/edie/Library/Application Support/typora-user-images/image-20210227201158577.png)
+
+![image-20210227201213946](/Users/edie/Library/Application Support/typora-user-images/image-20210227201213946.png)
+
+![image-20210227201245521](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227201245.png)
+
+![image-20210227201251081](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227201251.png)
+
+
+
+#### 关闭TCP连接
+
+![image-20210227201907709](/Users/edie/Library/Application Support/typora-user-images/image-20210227201907709.png)
+
+![image-20210227201944238](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227201944.png)
+
+![image-20210227202004053](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227202004.png)
+
+![image-20210227202017176](/Users/edie/Library/Application Support/typora-user-images/image-20210227202017176.png)
+
+![image-20210227202312520](/Users/edie/Library/Application Support/typora-user-images/image-20210227202312520.png)
+
+![image-20210227202328745](/Users/edie/Library/Application Support/typora-user-images/image-20210227202328745.png)
+
+![image-20210227202342961](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227202343.png)
+
+![image-20210227202609414](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227202609.png)
+
+#### 解调多路复用
+
+![image-20210227202708000](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227202708.png)
+
+![image-20210227202718704](/Users/edie/Library/Application Support/typora-user-images/image-20210227202718704.png)
+
+![image-20210227202814396](/Users/edie/Library/Application Support/typora-user-images/image-20210227202814396.png)
+
+![image-20210227202825500](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227202825.png)
+
+![image-20210227202831906](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210227202831.png)
 
