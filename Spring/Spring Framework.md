@@ -1193,6 +1193,74 @@ AOP编程的开发（动态代理开发）
 
 
 
+### Java事务
+
+#### 什么是事务
+
+事务（Transaction），一般是指要做的或所做的事情。在计算机术语中是指访问并可能更新数据库中各种数据项的一个程序执行单元(unit)。事务通常由高级数据库操纵语言或编程语言（如SQL，C++或Java）书写的用户程序的执行所引起，并用形如begin transaction和end transaction语句（或函数调用）来界定。事务由事务开始(begin transaction)和事务结束(end transaction)之间执行的全体操作组成。
+
+#### 为什么要事务
+
+事务是**为解决数据安全操作提出的，事务控制实际上就是控制数据的安全访问**。
+
+用一个简单例子说明：银行转帐业务，账户A要将自己账户上的1000元转到B账户下面，A账户余额首先要减去1000元，然后B账户要增加1000元。假如在中间网络出现了问题，A账户减去1000元已经结束，B因为网络中断而操作失败，那么整个业务失败，必须做出控制，要求A账户转帐业务撤销。这才能保证业务的正确性，完成这个操走就需要事务，将A账户资金减少和B账户资金增加放到同一个事务里，**要么全部执行成功，要么全部撤销，这样就保证了数据的安全性**。
+
+#### 事务的4个特性（ACID）
+
+- 原子性（atomicity）：事务是数据库的逻辑工作单位，而且是必须是原子工作单位，对于其数据修改，要么全部执行，要么全部不执行。
+- 一致性（consistency）：事务在完成时，必须是所有的数据都保持一致状态。在相关数据库中，所有规则都必须应用于事务的修改，以保持所有数据的完整性。（实例：转账，两个账户余额相加，值不变。）
+- 隔离性（isolation）：一个事务的执行不能被其他事务所影响。
+- 持久性（durability）：一个事务一旦提交，事物的操作便永久性的保存在DB中。即便是在数据库系统遇到故障的情况下也不会丢失提交事务的操作。
+
+#### Java有几种类型的事务
+
+- JDBC事务
+- JTA（Java Transaction API）事务
+- 容器事务
+
+##### JDBC事务
+
+在JDBC中处理事务，都是通过Connection完成的。同一事务中所有的操作，都在使用同一个Connection对象。JDBC事务默认是开启的，并且是默认提交。
+
+JDBC Connection 接口提供了两种事务模式：自动提交和手工提交
+
+JDBC中的事务java.sql.Connection 的三个方法与事务有关：
+
+setAutoCommit（boolean）:设置是否为自动提交事务，如果true（默认值为true）表示自动提交，也就是每条执行的SQL语句都是一个单独的事务，如果设置为false，需要手动提交事务。
+
+```java
+//手动提交事务需手动执行一下方法
+
+void commit() throws SQLException // 提交事务
+//Makes all changes made since the previous commit/rollback permanent and releases any database locks currently held by this Connection object. This method should be used only when auto-commit mode has been disabled.
+
+void rollback() throws SQLException //回滚事务
+//Undoes all changes made in the current transaction and releases any database locks currently held by this Connection object. This method should be used only when auto-commit mode has been disabled.
+```
+
+传统JDBC操作流程：
+
+ 1).获取JDBC连接  2).声明SQL  3).预编译SQL  4).执行SQL  5).处理结果集  
+
+ 6).释放结果集  7).释放Statement  8).提交事务  9).处理异常并回滚事务 10).释放JDBC连接
+
+JDBC优缺点
+
+1.冗长、重复     2.显示事务控制     3.每个步骤不可获取    4.显示处理受检查异常
+
+JDBC为使用Java进行数据库的事务操作提供了最基本的支持。通过JDBC事务，我们可以将多个SQL语句放到同一个事务中，保证其ACID特性。JDBC事务的主要优点就是API比较简单，可以实现最基本的事务操作，性能也相对较好。
+
+但是，JDBC事务有一个局限：**一个 JDBC 事务不能跨越多个数据库**！所以，如果涉及到多数据库的操作或者分布式场景，JDBC事务就无能为力了。
+
+##### JTA事务
+
+JTA(Java Transaction API)提供了跨数据库连接（或其他JTA资源）的事务管理能力。JTA事务管理则由JTA容器实现，J2ee框架中事务管理器与应用程序，资源管理器，以及应用服务器之间的事务通讯。
+
+- JTA的构成
+  - 高层应用事务界定接口，供事务客户界定事务边界的
+  - X/Open XA协议(资源之间的一种标准化的接口)的标准Java映射，它可以使事务性的资源管理器参与由外部事务管理器控制的事务中
+  - 高层事务管理器接口，允许应用程序服务器为其管理的应用程序界定事务的边界
+
 ### 事务抽象
 
 事务抽象的核心接口
@@ -1202,6 +1270,4 @@ PlatformTransactionManager
 - DataSourceTransactionManager
 - HibernateTransactionMangaer
 - JtaTransactionManager
-
-
 

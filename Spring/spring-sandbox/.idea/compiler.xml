@@ -7,12 +7,14 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="spring-bean" />
-        <module name="spring-context" />
-        <module name="java-sandbox" />
+        <module name="dependency-injection" />
         <module name="ioc-container-overview" />
+        <module name="java-sandbox" />
+        <module name="spring-context" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8">
+      <module name="dependency-injection" target="1.8" />
       <module name="ioc-container-overview" target="1.8" />
       <module name="java-sandbox" target="1.8" />
       <module name="spring-bean" target="1.8" />
