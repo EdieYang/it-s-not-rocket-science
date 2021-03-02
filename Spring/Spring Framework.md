@@ -1260,14 +1260,122 @@ JTA(Java Transaction API)提供了跨数据库连接（或其他JTA资源）的�
   - 高层应用事务界定接口，供事务客户界定事务边界的
   - X/Open XA协议(资源之间的一种标准化的接口)的标准Java映射，它可以使事务性的资源管理器参与由外部事务管理器控制的事务中
   - 高层事务管理器接口，允许应用程序服务器为其管理的应用程序界定事务的边界
+  
+- JTA的主要接口位于javax.transaction包中
+
+  - UserTransaction接口：让应用程序得以控制事务的开始、挂起、提交、回滚等。由Java客户端程序或EJB调用。
+  - TransactionManager 接口：用于应用服务器管理事务状态
+  - Transaction接口：用于执行相关事务操作
+  - XAResource接口：用于在分布式事务环境下，协调事务管理器和资源管理器的工作
+  - Xid接口：为事务标识符的Java映射
+
+  注：前3个接口位于Java EE版的类库 javaee.jar 中，Java SE中没有提供！UserTransaction是编程常用的接口,JTA只提供了接口，没有具体的实现。
+
+  JTS(Java Transaction Service)是服务OTS的JTA的实现。简单的说JTS实现了JTA接口，并且符合OTS的规范。
+
+  JTA的事务周期可横跨多个JDBC Connection生命周期，对众多Connection进行调度，实现其事务性要求。
+
+  JTA可以处理任何提供符合XA接口的资源。包括：JDBC连接，数据库，JMS，商业对象等等。 
+
+- JTA编程的基本步骤
+
+  - 首先配置JTA ，建立相应的数据源
+
+  - 建立事务：通过创建UserTransaction类的实例来开始一个事务。
+
+    ```java
+    Context ctx = new InitialContext(p) ;
+    
+    UserTransaction trans = (UserTransaction) ctx.lookup("javax.Transaction.UserTransaction")
+    ```
+
+  - 开始事务：代码为 trans.begin() ;
+
+  - 找出数据源：从Weblogic Server上找到数据源DataSource ds = (DataSource) ctx.lookup(“mysqldb") ;
+
+  - 建立数据库连接：Connection mycon = ds.getConnection() ;
+
+  - 执行SQL操作：stmt.executeUpdate(sqlS);
+
+  - 完成事务：trans.commit(); / trans.rollback();
+
+  - 关闭连接：mycon.close() ;
+
+JTA的优缺点：
+
+JTA的优点很明显，就是提供了分布式事务的解决方案，严格的ACID。但是，标准的JTA方式的事务管理在日常开发中并不常用。
+
+JTA的缺点是实现复杂，通常情况下，JTA UserTransaction需要从JNDI获取。这意味着，如果我们使用JTA，就需要同时使用JTA和JNDI。
+
+JTA本身就是个笨重的API，通常JTA只能在应用服务器环境下使用，因此使用JTA会限制代码的复用性。
+
+
+
+##### Spring容器事务
+
+Spring事务管理涉及的接口及其联系：
+
+![img](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210302143040.png)
 
 ### 事务抽象
 
-事务抽象的核心接口
+#### 事务抽象的核心接口
 
-PlatformTransactionManager
+##### PlatformTransactionManager
 
 - DataSourceTransactionManager
 - HibernateTransactionMangaer
+- JpaTransactionManager
 - JtaTransactionManager
+
+Spring并不直接管理事务，而是提供了多种事务管理器，他们将事务管理的职责委托给Hibernate或者JTA等持久化机制所提供的相关平台框架的事务来实现。 Spring事务管理器的接口是org.springframework.transaction.PlatformTransactionManager，通过这个接口，Spring为各个平台如JDBC、Hibernate等都提供了对应的事务管理器，但是具体的实现就是各个平台自己的事情了。
+
+1) Spring JDBC事务
+
+如果应用程序中直接使用JDBC来进行持久化，DataSourceTransactionManager会为你处理事务边界。为了使用     DataSourceTransactionManager，你需要使用如下的XML将其装配到应用程序的上下文定义中：
+
+```xml
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+     <property name="dataSource" ref="dataSource" />
+</bean>
+```
+
+ 实际上，DataSourceTransactionManager是通过调用java.sql.Connection来管理事务。通过调用连接的commit()方法来提交事务，同样，事务失败则通过调用rollback()方法进行回滚。
+
+2) Hibernate事务
+
+如果应用程序的持久化是通过Hibernate实现的，那么你需要使用HibernateTransactionManager。对于Hibernate3，需要在Spring上下文定义中添加如下的<bean>声明：
+
+```xml
+
+<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+     <property name="sessionFactory" ref="sessionFactory" />
+</bean>
+ 
+sessionFactory属性需要装配一个Hibernate的session工厂，HibernateTransactionManager的实现细节是它将事务管理的职责委托给org.hibernate.Transaction对象，而后者是从Hibernate Session中获取到的。当事务成功完成时，HibernateTransactionManager将会调用Transaction对象#的commit()方法，反之，将会调用rollback()方法。
+```
+
+3) Java持久化API事务（JPA）
+
+Hibernate多年来一直是事实上的Java持久化标准，但是现在Java持久化API作为真正的Java持久化标准进入大家的视野。如果你计划使用JPA的话，那你需要使用Spring的JpaTransactionManager来处理事务。你需要在Spring中这样配置JpaTransactionManager： 
+
+```xml
+<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+     <property name="sessionFactory" ref="sessionFactory" />
+</bean>
+```
+
+JpaTransactionManager只需要装配一个JPA实体管理工厂（javax.persistence.EntityManagerFactory接口的任意实现）。
+
+JpaTransactionManager将与由工厂所产生的JPA EntityManager合作来构建事务。
+
+
+
+##### TransactionDefinition
+
+事务管理器接口PlatformTransactionManager通过getTransaction(TransactionDefinition definition)方法来得到事务，这个方法里面的参数是TransactionDefinition类，这个类就定义了一些基本的事务属性。 
+
+事务属性可以理解成事务的一些基本配置，描述了事务策略如何应用到方法上。
+
+事务属性包含了5个方面:传播行为、隔离规则、回滚规则、事务超时、是否只读
 
