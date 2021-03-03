@@ -1625,7 +1625,7 @@ try {
 
  根据代理机制的不同，总结了五种Spring事务的配置方式，配置文件如下：
 
-   第一种方式：每个Bean都有一个代理
+  #####  第一种方式：每个Bean都有一个代理
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1678,60 +1678,229 @@ HISTORICAL NOTE: This class was originally designed to cover the typical case of
 
 
 
+##### 第二种方式：所有Bean共享一个代理基类
 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
 
+    <bean id="sessionFactory" 
+            class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> 
+        <property name="configLocation" value="classpath:hibernate.cfg.xml" /> 
+        <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration" />
+    </bean> 
 
-
-事务的属性可同通过注解方式或配置文件配置:
-
-- 注解方式：
-
-  @Transactional只能被应用到public方法上,对于其它非public的方法,如果标记了@Transactional也不会报错,但方法没有事务功能.
-  默认情况下,一个有事务方法, 遇到RuntimeException 时会回滚 . 遇到 受检查的异常 是不会回滚 的. 要想所有异常都回滚,要加上 @Transactional( rollbackFor={Exception.class,其它异常}) 
-
+    <!-- 定义事务管理器（声明式的事务） --> 
+    <bean id="transactionManager"
+        class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+   
+    <!-- 代理基类 -->
+    <bean id="transactionBase" 
+            class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean" 
+            lazy-init="true" abstract="true"> 
+        <!-- 配置事务管理器 --> 
+        <property name="transactionManager" ref="transactionManager" /> 
+        <!-- 配置事务属性 --> 
+        <property name="transactionAttributes"> 
+            <props> 
+                <prop key="*">PROPAGATION_REQUIRED</prop> 
+            </props> 
+        </property> 
+    </bean>   
   
+    <!-- 配置DAO -->
+    <bean id="userDaoTarget" class="com.bluesky.spring.dao.UserDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+   	
+    <bean id="userDao" parent="transactionBase" > 
+        <property name="target" ref="userDaoTarget" />  
+    </bean>
+</beans>
+```
+
+
+
+##### 第三种方式：使用拦截器
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
+
+    <bean id="sessionFactory" 
+            class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> 
+        <property name="configLocation" value="classpath:hibernate.cfg.xml" /> 
+        <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration" />
+    </bean> 
+
+    <!-- 定义事务管理器（声明式的事务） --> 
+    <bean id="transactionManager"
+        class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean> 
+  
+    <bean id="transactionInterceptor" 
+        class="org.springframework.transaction.interceptor.TransactionInterceptor"> 
+        <property name="transactionManager" ref="transactionManager" /> 
+        <!-- 配置事务属性 --> 
+        <property name="transactionAttributes"> 
+            <props> 
+                <prop key="*">PROPAGATION_REQUIRED</prop> 
+            </props> 
+        </property> 
+    </bean>
+     
+    <bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator"> 
+        <property name="beanNames"> 
+            <list> 
+                <value>*Dao</value>
+            </list> 
+        </property> 
+        <property name="interceptorNames"> 
+            <list> 
+                <value>transactionInterceptor</value> 
+            </list> 
+        </property> 
+    </bean> 
+ 
+    <!-- 配置DAO -->
+    <bean id="userDao" class="com.bluesky.spring.dao.UserDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+</beans>
+```
+
+![image-20210303170819993](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210303170820.png)
+
+AbstractAutoProxyCreator 有大量的beans需要被代理且委托给相同的拦截器
+
+BeanNameAutoProxyCreator 通过name来判断次bean是否需要被代理。
+
+
+
+##### 第四种方式：使用tx标签配置的拦截器
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+
+    <context:annotation-config />
+    <context:component-scan base-package="com.bluesky" />
+
+    <bean id="sessionFactory" 
+            class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> 
+        <property name="configLocation" value="classpath:hibernate.cfg.xml" /> 
+        <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration" />
+    </bean> 
+
+    <!-- 定义事务管理器（声明式的事务） --> 
+    <bean id="transactionManager"
+        class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*" propagation="REQUIRED" />
+        </tx:attributes>
+    </tx:advice>
+   
+    <aop:config>
+        <aop:pointcut id="interceptorPointCuts"
+            expression="execution(* com.bluesky.spring.dao.*.*(..))" />
+        <aop:advisor advice-ref="txAdvice"
+            pointcut-ref="interceptorPointCuts" />       
+    </aop:config>     
+</beans>
+```
+
+
+
+##### 第五种方式：全注解
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+
+    <context:annotation-config />
+    <context:component-scan base-package="com.bluesky" />
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <bean id="sessionFactory" 
+            class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> 
+        <property name="configLocation" value="classpath:hibernate.cfg.xml" /> 
+        <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration" />
+    </bean> 
+
+    <!-- 定义事务管理器（声明式的事务） --> 
+    <bean id="transactionManager"
+        class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+   
+</beans>
+```
+
+
+
+在需要事务的业务方法上加@Transactional注解
+
+@Transactional只能被应用到public方法上,对于其它非public的方法,如果标记了@Transactional也不会报错,但方法没有事务功能.
+默认情况下,一个有事务方法, 遇到RuntimeException 时会回滚 . 遇到 受检查的异常 是不会回滚 的. 要想所有异常都回滚,要加上 @Transactional( rollbackFor={Exception.class,其它异常}) 
+
+
 
 ![image-20210303120312358](https://raw.githubusercontent.com/EdieYang/itsnotrocketscience-pic/main/img/20210303120312.png)
 
 ```java
 @Transactional(
     readOnly = default false;, //读写事务
-    timeout = -1 ,     //事务的超时时间，-1为无限制
+    timeout = -1 ,     //事务的超时时间，-1为无限制
     noRollbackFor = ArithmeticException.class, //遇到指定的异常不回滚
     isolation =default Isolation.DEFAULT;, //事务的隔离级别，此处使用后端数据库的默认隔离级别
     propagation = default Propagation.REQUIRED; //事务的传播行为 
 )
 ```
 
-- 配置文件( aop拦截器方式):
 
-  ```xml
-  
-  <tx:advice id="advice" transaction-manager="txManager">
-      <tx:attributes>
-          <!-- tx:method的属性:
-                  * name 是必须的,表示与事务属性关联的方法名(业务方法名),对切入点进行细化。通配符 
-                       （*）可以用来指定一批关联到相同的事务属性的方法。
-                        如：'get*'、'handle*'、'on*Event'等等.
-                  * propagation：不是必须的,默认值是REQUIRED表示事务传播行为,
-                    包括REQUIRED,SUPPORTS,MANDATORY,REQUIRES_NEW,NOT_SUPPORTED,NEVER,NESTED
-                  * isolation：不是必须的 默认值DEFAULT ，表示事务隔离级别(数据库的隔离级别)
-                  * timeout：不是必须的 默认值-1(永不超时)，表示事务超时的时间（以秒为单位）
-                  * read-only：不是必须的 默认值false不是只读的表示事务是否只读？
-                  * rollback-for： 不是必须的表示将被触发进行回滚的 Exception(s)；以逗号分开。
-                     如：'com.foo.MyBusinessException,ServletException'
-                  * no-rollback-for：不是必须的表示不被触发进行回滚的 Exception(s),以逗号分开。                                        
-                     如：'com.foo.MyBusinessException,ServletException'   
-                  任何 RuntimeException 将触发事务回滚，但是任何 checked Exception 将不触发事务回滚                     
-              -->
-          <tx:method name="save*" propagation="REQUIRED" isolation="DEFAULT" read-only="false"/>
-          <tx:method name="update*" propagation="REQUIRED" isolation="DEFAULT" read-only="false"/>
-          <tx:method name="delete*" propagation="REQUIRED" isolation="DEFAULT" read-only="false"  rollback-for="Exception"/>
-          <!-- 其他的方法之只读的 -->
-          <tx:method name="*" read-only="true"/>
-      </tx:attributes>
-  </tx:advice>
-  ```
 
-  
 
