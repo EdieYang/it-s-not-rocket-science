@@ -1846,6 +1846,8 @@ BeanNameAutoProxyCreator 通过name来判断次bean是否需要被代理。
 
 ##### 第五种方式：全注解
 
+xml配置方式
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
@@ -1863,7 +1865,7 @@ BeanNameAutoProxyCreator 通过name来判断次bean是否需要被代理。
     <context:annotation-config />
     <context:component-scan base-package="com.bluesky" />
 
-    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <tx:annotation-driven transaction-manager="transactionManager"/> 
 
     <bean id="sessionFactory" 
             class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> 
@@ -1880,7 +1882,9 @@ BeanNameAutoProxyCreator 通过name来判断次bean是否需要被代理。
 </beans>
 ```
 
+如果不用xml配置Bean，需要加上 @EnableTransactionManagement注解 取代<tx:annotation-driven transaction-manager="transactionManager"/> 
 
+如果是springboot，可不加@EnableTransactionManagement，springboot自动加上了 
 
 在需要事务的业务方法上加@Transactional注解
 
@@ -1903,4 +1907,42 @@ BeanNameAutoProxyCreator 通过name来判断次bean是否需要被代理。
 
 
 
+Spring为原始Bean创建了代理Bean，注入是代理Bean。
+
+先创建了自身的实例A，然后再加了一层封装的代理B，Spring Bean注入给其他人时，注入的不是A，而是B。所以通过Bean来调用时，调用的是B.xxx()，在A自身内部调用内部方法时，调用的还是A.xxx()。
+
+类的内部方法调用带有@Transactional注解的方法，不会开启事务，因为类的内部调用没有调用代理类的方法，不会有增强的效果。所以解决方法是注入自己的实例，再调用自己的实例（此时Spring为你的实例注入的是代理类实例，有事务增强）方法。防止注入自己实例，可能出现的循环依赖问题，可以在注入自己实例的注解加上@Lazy，延迟加载。
+
+```java
+@Service
+public ServiceImpl implement Service{
+	@Autowired
+	@Lazy
+	private Service ServiceImpl;
+	
+  @Transactional(rollBackFor = Exception.class)
+  public void aMethod(){
+    	//回滚操作
+  }
+	
+  public void bMethod(){
+    //此时a方法在内部方法调用，不会有事务效果。因为调用的是不是代理类的aMethod方法，而是被代理对象的aMethod方法。
+    aMethod();
+  }
+	
+}
+
+@Service
+public otherService(){
+  @Autowired
+  private Service ServiceImpl;
+
+  public void test(){
+		ServiceImpl.bMethod(); //调用的是Spring容器注入的代理Bean的bMethod()方法，但是bMethod方法没有开启事务，而在内部调用aMethod，虽然带有事务注解，但实际执行到aMethod方法是代理Bean交由原始Bean去执行的。
+  }
+}
+
+```
+
+[3]: https://www.hollischuang.com/archives/5608	"Spring官方都推荐使用的@Transactional事务，为啥我不建议使用！"
 
