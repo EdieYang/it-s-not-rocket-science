@@ -1946,3 +1946,7 @@ public otherService(){
 
 [3]: https://www.hollischuang.com/archives/5608	"Spring官方都推荐使用的@Transactional事务，为啥我不建议使用！"
 
+
+
+Spring JDBC 异常抽象
+
