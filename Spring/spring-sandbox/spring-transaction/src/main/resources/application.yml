@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/spaceA?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai
+    username: root
+    password: stayfocus
+    filters: slf4j
+
+  application:
+    name: tranx
+  logging:
+    level:
+      root: trace
+      druid:
+        sql:
+          statement: debug
+
+
+server:
+  port: 8098

@@ -11,5 +11,7 @@ import java.util.Map;
  */
 public interface UserService {
 
-    Map<String,Object> getUserById(String id );
+    Map<String, Object> getUserById(String id);
+
+    void insertUser(Map<String, Object> user) throws Exception;
 }

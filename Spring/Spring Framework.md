@@ -1913,6 +1913,8 @@ Spring为原始Bean创建了代理Bean，注入是代理Bean。
 
 类的内部方法调用带有@Transactional注解的方法，不会开启事务，因为类的内部调用没有调用代理类的方法，不会有增强的效果。所以解决方法是注入自己的实例，再调用自己的实例（此时Spring为你的实例注入的是代理类实例，有事务增强）方法。防止注入自己实例，可能出现的循环依赖问题，可以在注入自己实例的注解加上@Lazy，延迟加载。
 
+> In proxy mode (which is the default), only external method calls coming in through the proxy are intercepted. This means that self-invocation (in effect, a method within the target object calling another method of the target object) does not lead to an actual transaction at runtime even if the invoked method is marked with `@Transactional`. Also, the proxy must be fully initialized to provide the expected behavior, so you should not rely on this feature in your initialization code (that is, `@PostConstruct`).
+
 ```java
 @Service
 public ServiceImpl implement Service{
@@ -1946,7 +1948,56 @@ public otherService(){
 
 [3]: https://www.hollischuang.com/archives/5608	"Spring官方都推荐使用的@Transactional事务，为啥我不建议使用！"
 
+[4]: https://blog.csdn.net/bntX2jSQfEHy7/article/details/79040349	"JDK动态代理Spring事务"
+
+编程式事务回滚：TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+```java
+public void resolvePosition() {
+    try {
+        // some business logic...
+    } catch (NoProductInStockException ex) {
+        // trigger rollback programmatically
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+    }
+}
+```
 
 
-Spring JDBC 异常抽象
 
+@Transactional 注解打在具体的实现类或实现类的方法上，而不是放在接口及接口方法上。
+
+proxy-target-class=“true”
+基于类的代理将起作用（cglib库）
+
+proxy-target-class=“false”
+基于接口的代理将起作用(标准的JDK,默认选项)
+高版本spring自动根据运行类选择JDK或CGLIB代理
+
+cglib动态代理和jdk动态代理的区别
+JDK动态代理只能对实现了接口的类生成代理，而不能针对类。
+CGLIB是针对类实现代理，主要是对指定的类生成一个子类，覆盖其中的方法，因为是继承，所以该类或者方法最好不要生命成final。
+————————————————
+
+打在具体的实现类上或方法上，jdk动态代理或CGLIB才能对这个实现类包装成代理对象。
+
+>  The Spring team recommends that you annotate only concrete classes (and methods of concrete classes) with the `@Transactional` annotation, as opposed to annotating interfaces. You certainly can place the `@Transactional` annotation on an interface (or an interface method), but this works only as you would expect it to if you use interface-based proxies. The fact that Java annotations are not inherited from interfaces means that, if you use class-based proxies (`proxy-target-class="true"`) or the weaving-based aspect (`mode="aspectj"`), the transaction settings are not recognized by the proxying and weaving infrastructure, and the object is not wrapped in a transactional proxy.
+
+
+
+**Annotation driven transaction settings**
+
+| XML Attribute         | Annotation Attribute                                         | Default                     | Description                                                  |
+| :-------------------- | :----------------------------------------------------------- | :-------------------------- | :----------------------------------------------------------- |
+| `transaction-manager` | N/A (see [`TransactionManagementConfigurer`](https://docs.spring.io/spring-framework/docs/5.3.4/javadoc-api/org/springframework/transaction/annotation/TransactionManagementConfigurer.html) javadoc) | `transactionManager`        | Name of the transaction manager to use. Required only if the name of the transaction manager is not `transactionManager`, as in the preceding example. |
+| `mode`                | `mode`                                                       | `proxy`                     | The default mode (`proxy`) processes annotated beans to be proxied by using Spring’s AOP framework (following proxy semantics, as discussed earlier, applying to method calls coming in through the proxy only). The alternative mode (`aspectj`) instead weaves the affected classes with Spring’s AspectJ transaction aspect, modifying the target class byte code to apply to any kind of method call. AspectJ weaving requires `spring-aspects.jar` in the classpath as well as having load-time weaving (or compile-time weaving) enabled. (See [Spring configuration](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-aj-ltw-spring) for details on how to set up load-time weaving.) |
+| `proxy-target-class`  | `proxyTargetClass`                                           | `false`                     | Applies to `proxy` mode only. Controls what type of transactional proxies are created for classes annotated with the `@Transactional` annotation. If the `proxy-target-class` attribute is set to `true`, class-based proxies are created. If `proxy-target-class` is `false` or if the attribute is omitted, then standard JDK interface-based proxies are created. (See [Proxying Mechanisms](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-proxying) for a detailed examination of the different proxy types.) |
+| `order`               | `order`                                                      | `Ordered.LOWEST_PRECEDENCE` | Defines the order of the transaction advice that is applied to beans annotated with `@Transactional`. (For more information about the rules related to ordering of AOP advice, see [Advice Ordering](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-ataspectj-advice-ordering).) No specified ordering means that the AOP subsystem determines the order of the advice. |
+
+ The default advice mode for processing `@Transactional` annotations is `proxy`, which allows for interception of calls through the proxy only. Local calls within the same class cannot get intercepted that way. For a more advanced mode of interception, consider switching to `aspectj` mode in combination with compile-time or load-time weaving.
+
+
+
+### Spring JDBC 异常抽象
+
+见同文件夹附件 Spring jdbc异常抽象.md
